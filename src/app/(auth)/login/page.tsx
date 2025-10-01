@@ -57,7 +57,9 @@ export default function LoginNeon() {
 
           <form onSubmit={onSubmit} className="grid gap-4 text-left">
             <div>
-              <label htmlFor="email" className="sr-only">Email</label>
+              <label htmlFor="email" className="sr-only">
+                Email
+              </label>
               <input
                 id="email"
                 type="email"
@@ -70,7 +72,9 @@ export default function LoginNeon() {
             </div>
 
             <div>
-              <label htmlFor="pw" className="sr-only">Password</label>
+              <label htmlFor="pw" className="sr-only">
+                Password
+              </label>
               <input
                 id="pw"
                 type="password"
