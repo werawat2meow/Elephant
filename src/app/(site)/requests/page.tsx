@@ -2,6 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import LeaveHistoryModal, {
+  LeaveHistoryItem,
+} from "@/components/LeaveHistoryModal";
 
 type LeaveType =
   | "Annual Leave"
@@ -13,13 +16,13 @@ type LeaveType =
   | "OT";
 
 type EmployeeForm = {
-  formNo?: string;
+  Nametitle?: string;
   empNo?: string;
   name?: string;
   position?: string;
   section?: string;
   department?: string;
-  startWorkDate?: string;
+  LevelP?: string;
 };
 
 type LeaveForm = {
@@ -48,9 +51,29 @@ const DEFAULT_HOLIDAYS: { no: number; name: string; date: string }[] = [
 
 export default function LeavePage() {
   const router = useRouter();
+  const [openHistory, setOpenHistory] = useState(false);
+
+  const history: LeaveHistoryItem[] = [
+    {
+      no: 1,
+      type: "ลาป่วย",
+      range: "11-12 / 09 / 68",
+      approverComment: "xxxxxxxxxxxxxxxx",
+      approver: "xxxxxxxxxx",
+      status: "approved",
+    },
+    {
+      no: 2,
+      type: "ลากิจ",
+      range: "11-12 / 09 / 68",
+      approverComment: "xxxxxxxxxxxxxxxx",
+      approver: "xxxxxxxxxx",
+      status: "rejected",
+    },
+  ];
 
   const [emp, setEmp] = useState<EmployeeForm>({
-    formNo: "HR-009",
+    Nametitle: "นาย",
   });
   const [leave, setLeave] = useState<LeaveForm>({ session: "Full Day" });
   const [submitting, setSubmitting] = useState(false);
@@ -108,55 +131,101 @@ export default function LeavePage() {
 
   return (
     <main className="min-h-dvh bg-[var(--bg)] text-[var(--text)]">
-      {/* <header className="sticky top-0 z-40 backdrop-blur bg-[color:rgba(0,0,0,.25)] border-b border-white/10">
-        <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl md:text-2xl font-bold">Application for Leave (Web)</h1>
-          <a
-            href="/dashboard"
-            className="rounded-lg px-3 py-2 text-sm font-semibold bg-[var(--cyan)] text-[#001418] shadow-[0_8px_24px_var(--cyan-soft)]"
+      <div className="mx-auto max-w-6xl px-4 pt-4">
+        <div className="flex justify-end">
+          <button
+            onClick={() => setOpenHistory(true)}
+            className="rounded-xl px-4 py-2 font-extrabold
+             bg-[var(--cyan)] text-[#001418]
+             shadow-[0_10px_28px_var(--cyan-soft)]
+             hover:shadow-[0_14px_36px_var(--cyan-soft)]
+             focus:outline-none focus:ring-2 focus:ring-[var(--cyan)]/50
+             active:translate-y-[1px] transition"
           >
-            Back to Dashboard
-          </a>
+            ประวัติการลา
+          </button>
         </div>
-      </header> */}
+      </div>
 
       <div className="mx-auto max-w-6xl px-4 py-6 grid gap-6 lg:grid-cols-3">
         {/* ฝั่งซ้าย: ข้อมูลพนักงาน + ประเภทการลา + ช่วงวัน */}
         <section className="lg:col-span-2 space-y-6">
           {/* ข้อมูลพนักงาน */}
           <div className="neon-card rounded-2xl p-5">
-            <h2 className="neon-title mb-3 text-lg font-semibold">ข้อมูลพนักงาน</h2>
+            <h2 className="neon-title mb-3 text-lg font-semibold">
+              ข้อมูลพนักงาน
+            </h2>
             <div className="grid gap-3 md:grid-cols-2">
-              <Input label="เลขที่เอกสาร" value={emp.formNo ?? ""} onChange={(v) => onChangeEmp("formNo", v)} />
-              <Input label="วันที่ยื่น (Auto)" value={new Date().toLocaleDateString()} readOnly />
-              <Input required label="รหัสพนักงาน (EMP No.)" value={emp.empNo ?? ""} onChange={(v) => onChangeEmp("empNo", v)} />
-              <Input required label="ชื่อ - สกุล" value={emp.name ?? ""} onChange={(v) => onChangeEmp("name", v)} />
-              <Input label="ตำแหน่ง" value={emp.position ?? ""} onChange={(v) => onChangeEmp("position", v)} />
-              <Input label="Section" value={emp.section ?? ""} onChange={(v) => onChangeEmp("section", v)} />
-              <Input label="Department" value={emp.department ?? ""} onChange={(v) => onChangeEmp("department", v)} />
-              <Input label="วันเริ่มงาน" type="date" value={emp.startWorkDate ?? ""} onChange={(v) => onChangeEmp("startWorkDate", v)} />
+              <Input
+                label="คำนำหน้าชื่อ"
+                value={emp.Nametitle ?? ""}
+                onChange={(v) => onChangeEmp("Nametitle", v)}
+              />
+              <Input
+                label="วันที่ยื่น (Auto)"
+                value={new Date().toLocaleDateString()}
+                readOnly
+              />
+              <Input
+                required
+                label="รหัสพนักงาน (EMP No.)"
+                value={emp.empNo ?? ""}
+                onChange={(v) => onChangeEmp("empNo", v)}
+              />
+              <Input
+                required
+                label="ชื่อ - สกุล"
+                value={emp.name ?? ""}
+                onChange={(v) => onChangeEmp("name", v)}
+              />
+              <Input
+                label="ตำแหน่ง"
+                value={emp.position ?? ""}
+                onChange={(v) => onChangeEmp("position", v)}
+              />
+              <Input
+                label="Section"
+                value={emp.section ?? ""}
+                onChange={(v) => onChangeEmp("section", v)}
+              />
+              <Input
+                label="Department"
+                value={emp.department ?? ""}
+                onChange={(v) => onChangeEmp("department", v)}
+              />
+              <Input
+                label="Level P"
+                value={emp.LevelP ?? ""}
+                onChange={(v) => onChangeEmp("LevelP", v)}
+              />
             </div>
           </div>
 
           {/* ประเภทการลา */}
           <div className="neon-card rounded-2xl p-5">
-            <h2 className="neon-title mb-3 text-lg font-semibold">ประเภทการลา</h2>
+            <h2 className="neon-title mb-3 text-lg font-semibold">
+              ประเภทการลา
+            </h2>
             <div className="grid gap-3 md:grid-cols-2">
               {(
                 [
+                  "Public Holidays",
                   "Annual Leave",
                   "Sick Leave",
-                  "Leave without pay",
-                  "Maternity / Cremation / Military / Marriage Leave",
-                  "Shift Change",
-                  "Holiday Change",
-                  "OT",
+                  "Personal Leave",
+                  "Relygious Leave",
+                  "Monkhood Leave",
+                  "Haji Leave",
+                  "Birthday Leave",
+                  "Leave without Pay",
                 ] as LeaveType[]
               ).map((t) => (
                 <label
                   key={t}
                   className={`rounded-xl border border-white/10 p-3 cursor-pointer transition ${
-                    leave.leaveType === t ? "bg-[var(--input)] ring-2 ring-[var(--cyan)]" : "bg-transparent hover:bg-white/5"
+                    leave.leaveType === t
+                      ? "bg-[var(--input)] ring-2 ring-[var(--cyan)]"
+                      : "bg-transparent hover:bg-white/5"
                   }`}
                 >
                   <input
@@ -173,23 +242,49 @@ export default function LeavePage() {
           </div>
 
           {/* ช่วงวัน/เหตุผล/แนบไฟล์ */}
-          <form onSubmit={onSubmit} className="neon-card rounded-2xl p-5 space-y-4">
-            <h2 className="neon-title mb-1 text-lg font-semibold">รายละเอียดการลา</h2>
+          <form
+            onSubmit={onSubmit}
+            className="neon-card rounded-2xl p-5 space-y-4"
+          >
+            <h2 className="neon-title mb-1 text-lg font-semibold">
+              รายละเอียดการลา
+            </h2>
 
             <div className="grid gap-3 md:grid-cols-2">
-              <Input required label="ตั้งแต่วันที่" type="date" value={leave.fromDate ?? ""} onChange={(v) => onChangeLeave("fromDate", v)} />
-              <Input required label="ถึงวันที่" type="date" value={leave.toDate ?? ""} onChange={(v) => onChangeLeave("toDate", v)} />
+              <Input
+                required
+                label="ตั้งแต่วันที่"
+                type="date"
+                value={leave.fromDate ?? ""}
+                onChange={(v) => onChangeLeave("fromDate", v)}
+              />
+              <Input
+                required
+                label="ถึงวันที่"
+                type="date"
+                value={leave.toDate ?? ""}
+                onChange={(v) => onChangeLeave("toDate", v)}
+              />
             </div>
 
             <div className="grid gap-3 md:grid-cols-3">
               {["Full Day", "Morning (Half)", "Afternoon (Half)"].map((s) => (
-                <label key={s} className={`rounded-xl border border-white/10 p-3 cursor-pointer ${leave.session === s ? "bg-[var(--input)] ring-2 ring-[var(--cyan)]" : "hover:bg-white/5"}`}>
+                <label
+                  key={s}
+                  className={`rounded-xl border border-white/10 p-3 cursor-pointer ${
+                    leave.session === s
+                      ? "bg-[var(--input)] ring-2 ring-[var(--cyan)]"
+                      : "hover:bg-white/5"
+                  }`}
+                >
                   <input
                     type="radio"
                     name="session"
                     className="mr-2 accent-[var(--cyan)]"
                     checked={leave.session === s}
-                    onChange={() => onChangeLeave("session", s as LeaveForm["session"])}
+                    onChange={() =>
+                      onChangeLeave("session", s as LeaveForm["session"])
+                    }
                   />
                   {s}
                 </label>
@@ -197,8 +292,16 @@ export default function LeavePage() {
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
-              <Input label="ผู้รับมอบหมายงาน (ถ้ามี)" value={leave.handoverTo ?? ""} onChange={(v) => onChangeLeave("handoverTo", v)} />
-              <Input label="ช่องทางติดต่อระหว่างลา" value={leave.contact ?? ""} onChange={(v) => onChangeLeave("contact", v)} />
+              <Input
+                label="ผู้อนุมัติ"
+                value={leave.handoverTo ?? ""}
+                onChange={(v) => onChangeLeave("handoverTo", v)}
+              />
+              <Input
+                label="ช่องทางติดต่อระหว่างลา"
+                value={leave.contact ?? ""}
+                onChange={(v) => onChangeLeave("contact", v)}
+              />
             </div>
 
             <div>
@@ -213,22 +316,33 @@ export default function LeavePage() {
             </div>
 
             <div>
-              <label className="block text-sm mb-1">แนบไฟล์ประกอบ (ถ้ามี)</label>
+              <label className="block text-sm mb-1">
+                แนบไฟล์ประกอบ (ถ้ามี)
+              </label>
               <input
                 type="file"
                 className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--cyan)] file:px-3 file:py-2 file:font-semibold file:text-[#001418]"
-                onChange={(e) => onChangeLeave("attachment", e.target.files?.[0] ?? null)}
+                onChange={(e) =>
+                  onChangeLeave("attachment", e.target.files?.[0] ?? null)
+                }
               />
             </div>
 
             <div className="flex items-center justify-between gap-4">
               <div className="text-sm text-[var(--muted)]">
                 รวมวันลา (ประมาณ):{" "}
-                <span className="font-semibold text-[var(--text)]">{totalDays}</span>{" "}
+                <span className="font-semibold text-[var(--text)]">
+                  {totalDays}
+                </span>{" "}
                 วัน
               </div>
               <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" className="accent-[var(--cyan)]" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  className="accent-[var(--cyan)]"
+                  checked={agree}
+                  onChange={(e) => setAgree(e.target.checked)}
+                />
                 ยืนยันว่าข้อมูลถูกต้อง
               </label>
             </div>
@@ -236,7 +350,7 @@ export default function LeavePage() {
             <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => history.back()}
+                onClick={() => router.back()}
                 className="rounded-xl px-4 py-2 border border-white/10 hover:bg-white/5"
               >
                 ยกเลิก
@@ -255,25 +369,33 @@ export default function LeavePage() {
         {/* ฝั่งขวา: สิทธิวันลา + วันหยุดประจำปี */}
         <aside className="space-y-6">
           <div className="neon-card rounded-2xl p-5">
-            <h2 className="neon-title mb-3 text-lg font-semibold">สิทธิวันลา (ตัวอย่าง/แก้ไขตามนโยบายบริษัท)</h2>
+            <h2 className="neon-title mb-3 text-lg font-semibold">
+              สิทธิวันลา (ตัวอย่าง/แก้ไขตามนโยบายบริษัท)
+            </h2>
             <ul className="space-y-2 text-sm">
               <li className="flex items-center justify-between rounded-xl bg-[var(--input)] px-3 py-2">
-                <span>Annual Leave</span><b>10 วัน/ปี</b>
+                <span>Annual Leave</span>
+                <b>10 วัน/ปี</b>
               </li>
               <li className="flex items-center justify-between rounded-xl bg-[var(--input)] px-3 py-2">
-                <span>Sick Leave</span><b>30 วัน/ปี</b>
+                <span>Sick Leave</span>
+                <b>30 วัน/ปี</b>
               </li>
               <li className="flex items-center justify-between rounded-xl bg-[var(--input)] px-3 py-2">
-                <span>Leave without pay</span><b>ตามอนุมัติ</b>
+                <span>Leave without pay</span>
+                <b>ตามอนุมัติ</b>
               </li>
               <li className="flex items-center justify-between rounded-xl bg-[var(--input)] px-3 py-2">
-                <span>Special Leave</span><b>ตามระเบียบ HR</b>
+                <span>Special Leave</span>
+                <b>ตามระเบียบ HR</b>
               </li>
             </ul>
           </div>
 
           <div className="neon-card rounded-2xl p-5">
-            <h2 className="neon-title mb-3 text-lg font-semibold">วันหยุดประจำปี (Public Holidays)</h2>
+            <h2 className="neon-title mb-3 text-lg font-semibold">
+              วันหยุดประจำปี (Public Holidays)
+            </h2>
             <div className="max-h-[360px] overflow-auto rounded-xl border border-white/10">
               <table className="w-full text-sm">
                 <thead className="bg-white/5">
@@ -288,11 +410,13 @@ export default function LeavePage() {
                     <tr key={h.no} className="odd:bg-white/0 even:bg-white/5">
                       <td className="px-3 py-2">{h.no}</td>
                       <td className="px-3 py-2">{h.name}</td>
-                      <td className="px-3 py-2">{new Date(h.date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'numeric',
-                            day: 'numeric'
-                        })}</td>
+                      <td className="px-3 py-2">
+                        {new Date(h.date).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "numeric",
+                          day: "numeric",
+                        })}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -304,6 +428,11 @@ export default function LeavePage() {
           </div>
         </aside>
       </div>
+      <LeaveHistoryModal
+        open={openHistory}
+        onClose={() => setOpenHistory(false)}
+        items={history}
+      />
     </main>
   );
 }
@@ -326,14 +455,19 @@ function Input({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm">{label}{required && <span className="text-red-400"> *</span>}</span>
+      <span className="mb-1 block text-sm">
+        {label}
+        {required && <span className="text-red-400"> *</span>}
+      </span>
       <input
         type={type}
         value={value}
         readOnly={readOnly}
         onChange={(e) => onChange?.(e.target.value)}
         required={required}
-        className={`neon-input w-full rounded-xl p-3 ${readOnly ? "opacity-70" : ""}`}
+        className={`neon-input w-full rounded-xl p-3 ${
+          readOnly ? "opacity-70" : ""
+        }`}
       />
     </label>
   );
