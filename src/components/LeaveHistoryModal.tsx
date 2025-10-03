@@ -5,8 +5,8 @@ export type LeaveHistoryItem = {
   no: number;
   type: string;
   range: string; // ช่วงวันที่ลา (เช่น 11-12/09/68)
-//   from: string;
-//   to: string;
+  from: string;
+  to: string;
   approverComment: string;
   approver: string;
   status: "approved" | "rejected" | "pending";

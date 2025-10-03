@@ -53,11 +53,13 @@ export default function LeavePage() {
   const router = useRouter();
   const [openHistory, setOpenHistory] = useState(false);
 
-  const history: LeaveHistoryItem[] = [
+const history: LeaveHistoryItem[] = [
     {
       no: 1,
       type: "ลาป่วย",
       range: "11-12 / 09 / 68",
+      from: "2025-09-11",
+      to: "2025-09-12",
       approverComment: "xxxxxxxxxxxxxxxx",
       approver: "xxxxxxxxxx",
       status: "approved",
@@ -66,6 +68,8 @@ export default function LeavePage() {
       no: 2,
       type: "ลากิจ",
       range: "11-12 / 09 / 68",
+      from: "2025-09-11",
+      to: "2025-09-12",
       approverComment: "xxxxxxxxxxxxxxxx",
       approver: "xxxxxxxxxx",
       status: "rejected",
