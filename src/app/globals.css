@@ -233,3 +233,41 @@ html.theme-light body{
     radial-gradient(60% 60% at 50% 70%, rgba(0,0,0,.03), transparent 70%),
     var(--bg);
 }
+
+.btn {
+  border-radius: 0.75rem;      /* rounded-xl */
+  padding: 0.5rem 0.75rem;     /* px-3 py-2 */
+  font-weight: 700;            /* font-semibold/bold-ish */
+  transition: transform .08s ease, background-color .2s ease, box-shadow .2s ease, filter .2s ease;
+  outline: none;
+}
+
+.btn:active { transform: translateY(1px); }
+
+/* ปุ่มโทนกลมกลืนพาเนล (ใช้กับ Dark/Light ได้จากตัวแปร) */
+.btn-soft {
+  background: var(--input);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(0,0,0,.06);
+}
+.btn-soft:hover { filter: brightness(1.05); }
+
+/* ปุ่มหลักสีฟ้า */
+.btn-primary {
+  background: var(--cyan);
+  color: #001418;
+  box-shadow: 0 10px 28px var(--cyan-soft);
+}
+.btn-primary:hover { filter: brightness(1.03); }
+
+/* ปุ่มเส้นขอบกลมกลืน */
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { background: rgba(255,255,255,.05); }
+
+/* ขนาดเต็มความกว้าง เมื่ออยากให้ดูเป็น action block */
+.btn-block { width: 100%; }
