@@ -17,8 +17,7 @@ export default function AppHeader() {
         <ThemeToggle />
         {/* <button
           onClick={() => { localStorage.removeItem("demo-auth"); router.push("/login"); }}
-          className="rounded-xl px-4 py-2 font-semibold bg-[var(--cyan)] text-[#001418]
-                     shadow-[0_8px_26px_rgba(8,247,254,.35)]"
+          className="rounded-xl px-4 py-2 font-semibold bg-[var(--cyan)] text-[#001418] shadow-[0_8px_26px_rgba(8,247,254,.35)]"
         >
           Logout
         </button> */}
