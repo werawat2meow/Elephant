@@ -6,9 +6,17 @@ export default function ApproversPage() {
       <h2 className="neon-title text-lg font-semibold mb-4">เพิ่มผู้มีสิทธิ์อนุมัติ</h2>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Field label="ชื่อ-สกุลผู้อนุมัติ" placeholder="เช่น นายสมชาย ใจดี" />
-        <Field label="อีเมลผู้อนุมัติ" type="email" placeholder="boss@company.com" />
-        <Field label="สายงาน/แผนก" placeholder="เช่น Production" />
+        <Field label="คำนำหน้าชื่อ" placeholder="" />
+        <Field label="ชื่อ (ไทย - อังกฤษ)" placeholder="" />
+        <Field label="นามสกุล (ไทย - อังกฤษ)" placeholder="" />
+        <Field label="รหัสพนักงาน" placeholder="" />
+        <Field label="บัตรประชาชน" placeholder="" />
+        <Field label="สังกัด" placeholder="" />
+        <Field label="แผนก" placeholder="" />
+        <Field label="ฝ่าย" placeholder="" />
+        <Field label="หน่วย" placeholder="" />
+        <Field label="Level P" placeholder="" />
+        <Field label="Line ID" placeholder="" />
       </div>
 
       <div className="mt-5 flex justify-end gap-3">
