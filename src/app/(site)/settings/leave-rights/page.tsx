@@ -20,14 +20,20 @@ const makeRow = (seed: number = 1): LeaveRow => ({
 export default function LeaveRightsPage() {
   const [rows, setRows] = useState<LeaveRow[]>([makeRow(1)]);
   const LS_KEY = "leave-rights-rows";
+
+  const [saving, setSaving] = useState(false);  
+  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     const raw = localStorage.getItem(LS_KEY);
     if (raw) {
       try {
         const parsed = JSON.parse(raw) as LeaveRow[];
-        setRows(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) setRows(parsed);
       } catch {}
     }
+    setHydrated(true); 
   }, []);
 
   const updateRow = (id: string, patch: Partial<LeaveRow>) => {
@@ -54,16 +60,38 @@ export default function LeaveRightsPage() {
     ]);
   };
 
-  const handleSave = () => {
-  const normalized = rows.map(r => ({
-    ...r,
-    vacation: r.vacation === "" ? 0 : Number(r.vacation),
-    business: r.business === "" ? 0 : Number(r.business),
-    sick: r.sick === "" ? 0 : Number(r.sick),
-  }));
-  localStorage.setItem(LS_KEY, JSON.stringify(normalized)); // ✅ อยู่หลังรีเฟรช
-  console.log("SAVE ROWS =>", normalized);
-};
+//   const handleSave = () => {
+//   const normalized = rows.map(r => ({
+//     ...r,
+//     vacation: r.vacation === "" ? 0 : Number(r.vacation),
+//     business: r.business === "" ? 0 : Number(r.business),
+//     sick: r.sick === "" ? 0 : Number(r.sick),
+//   }));
+//   localStorage.setItem(LS_KEY, JSON.stringify(normalized));
+//   console.log("SAVE ROWS =>", normalized);
+// };
+
+    const handleSave = () => {
+    setSaving(true);
+    try {
+      const normalized = rows.map(r => ({
+        ...r,
+        vacation: r.vacation === "" ? 0 : Number(r.vacation),
+        business: r.business === "" ? 0 : Number(r.business),
+        sick: r.sick === "" ? 0 : Number(r.sick),
+      }));
+      localStorage.setItem("leave-rights-rows:v1", JSON.stringify(normalized));
+      localStorage.setItem(LS_KEY, JSON.stringify(normalized));
+      setToast({ type: "success", msg: `บันทึกแล้ว ${normalized.length} รายการ` });
+    } catch (e) {
+      setToast({ type: "error", msg: "บันทึกล้มเหลว กรุณาลองใหม่" });
+    } finally {
+      setSaving(false);
+      setTimeout(() => setToast(null), 2500); // ซ่อน toast อัตโนมัติ
+    }
+  };
+
+  
 
   return (
     <section
@@ -134,7 +162,7 @@ export default function LeaveRightsPage() {
               <button
                 type="button"
                 onClick={() => removeRow(row.id)}
-                className="rounded-xl border ยะ border-rose-300 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:border-rose-500/50 dark:text-rose-400 dark:hover:bg-rose-950/40 h-[42px] whitespace-nowrap"
+                className="rounded-xl border border-rose-300 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:border-rose-500/50 dark:text-rose-400 dark:hover:bg-rose-950/40 h-[42px] whitespace-nowrap"
                 title="ลบแถว"
                 aria-label="ลบแถว"
               >
@@ -149,10 +177,22 @@ export default function LeaveRightsPage() {
         <button type="button" className="btn-ghost" onClick={addRow}>
           เพิ่มรายการ
         </button>
-        <button type="button" className="btn-primary" onClick={handleSave}>
-          บันทึก
+        <button type="button" className="btn-primary disabled:opacity-60" onClick={handleSave} disabled={saving}>
+          {saving ? "กำลังบันทึก..." : "บันทึก"}
         </button>
       </div>
+
+      <div className="sr-only" aria-live="polite">{toast?.msg}</div>
+      {toast && (
+        <div className="fixed bottom-4 right-4 z-[60]">
+          <div className={`rounded-xl px-4 py-3 text-white ${toast.type==="success" ? "bg-emerald-600/90" : "bg-rose-600/90"}`}>
+            {toast.msg}
+            <button className="ml-3 border border-white/20 rounded px-2 text-xs" onClick={() => setToast(null)} aria-label="ปิดการแจ้งเตือน">
+              ปิด
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
