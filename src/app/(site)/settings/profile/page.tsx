@@ -1,6 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import EmployeeListModal, { type Employee } from "@/components/EmployeeListModal";
+
+
+const MOCK_EMPLOYEES: Employee[] = [
+  { id: "1", empNo: "EMP001", name: "สมชาย ใจดี", dept: "พัฒนาระบบ" },
+  { id: "2", empNo: "EMP002", name: "สุนีย์ สายบุญ", dept: "ฝ่ายบุคคล" },
+  { id: "3", empNo: "EMP003", name: "อาทิตย์ อรุณรุ่ง", dept: "หน่วยเทคนิค" },
+];
 
 export default function ProfileSettingsPage() {
   // --- รูปพนักงาน ---
@@ -9,6 +17,8 @@ export default function ProfileSettingsPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const pickFile = () => inputRef.current?.click();
+  const [openEmpModal, setOpenEmpModal] = useState(false);
+
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -49,7 +59,17 @@ export default function ProfileSettingsPage() {
 
   return (
     <section role="tabpanel" aria-label="เพิ่มข้อมูล" className="neon-card rounded-2xl p-4 sm:p-6">
-      <h2 className="neon-title text-base sm:text-lg font-semibold mb-4">เพิ่มข้อมูล</h2>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="neon-title text-base sm:text-lg font-semibold mb-4">เพิ่มข้อมูล</h2>
+        <button
+        type="button"
+        className="neon-title rounded-xl px-4 py-2 border border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5 cursor-pointer"
+        onClick={() => setOpenEmpModal(true)}
+        >
+          รายชื่อพนักงาน
+        </button>
+      </div>
+      
 
       {/* NOTE: ทำ responsive ที่นี่
           - โมบาย: 1 คอลัมน์ (รูปอยู่บน, ฟอร์มอยู่ล่าง)
@@ -148,6 +168,11 @@ export default function ProfileSettingsPage() {
           บันทึก
         </button>
       </div>
+      <EmployeeListModal
+        open={openEmpModal}
+        onClose={() => setOpenEmpModal(false)}
+        employees={MOCK_EMPLOYEES}
+      />
     </section>
   );
 }
