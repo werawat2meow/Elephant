@@ -1,6 +1,16 @@
 "use client";
 
+import { useState } from "react";
+import ApproverListModal, { type Approver } from "@/components/ApproverListModal";
+
+const MOCK_APPROVERS: Approver[] = [
+  { id: "1", empNo: "EMP201", name: "สมชาย ใจดี", dept: "การเงิน", level: "P3" },
+  { id: "2", empNo: "EMP245", name: "สุนีย์ สายบุญ", dept: "บุคคล", level: "P2" },
+  { id: "3", empNo: "EMP318", name: "อาทิตย์ อรุณรุ่ง", dept: "เทคนิค", level: "P4" },
+];
+
 export default function ApproversPage() {
+  const 
   return (
     <section role="tabpanel" aria-label="เพิ่มผู้มีสิทธิ์อนุมัติ" className="neon-card rounded-2xl p-6">
       <h2 className="neon-title text-lg font-semibold mb-4">เพิ่มผู้มีสิทธิ์อนุมัติ</h2>
