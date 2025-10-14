@@ -23,7 +23,7 @@ export default function ApproversPage() {
         <button
           type="button"
           className="neon-title cursor-pointer rounded-xl px-4 py-2 border border-slate-3000 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"
-          onClick={() => setOpen(true)}
+          onClick={() => setOpen(true)} 
         >
           รายชื่อผู้มีสิทธิ์อนุมัติ
         </button>
