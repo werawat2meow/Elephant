@@ -7,23 +7,60 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/* ---- Enums ---- */
+enum Role {
+  MASTER_ADMIN
+  ADMIN
+  MANAGER
+  USER
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/* ---- Models ---- */
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  leaves    Leave[]
-  createdAt DateTime @default(now())
+  id           Int        @id @default(autoincrement())
+  name         String?
+  email        String     @unique
+  passwordHash String
+  role         Role       @default(USER)
+
+  leaves       Leave[]                       // คำขอที่ user นี้ยื่น
+  approvals    Leave[]    @relation("ApproverRequests") // คำขอที่ user นี้เป็นผู้อนุมัติ
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([role])
 }
 
 model Leave {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  type      String
-  startDate DateTime
-  endDate   DateTime
-  reason    String?
-  status    String   @default("Pending")
-  createdAt DateTime @default(now())
+  id         Int          @id @default(autoincrement())
+
+  // ผู้ยื่นคำขอ
+  user       User         @relation(fields: [userId], references: [id])
+  userId     Int
+
+  // ผู้อนุมัติ (อาจยังว่าง)
+  approver   User?        @relation("ApproverRequests", fields: [approverId], references: [id])
+  approverId Int?
+
+  type       String       // ภายหลังอยากทำ enum ก็ได้
+  startDate  DateTime
+  endDate    DateTime
+  reason     String?
+
+  status     LeaveStatus  @default(PENDING)
+  approvedAt DateTime?
+
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([approverId])
+  @@index([status, createdAt])
 }

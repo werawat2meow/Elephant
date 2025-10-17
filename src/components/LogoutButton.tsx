@@ -1,15 +1,15 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";   // ⬅️ เพิ่มบรรทัดนี้
 
 export default function LogoutButton() {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
 
-  const doLogout = () => {
-    localStorage.removeItem("demo-auth");
+  const doLogout = async () => {
     setOpen(false);
-    router.replace("/login");
+    // เคลียร์ session แล้ว redirect ไป /login
+    await signOut({ redirect: true, callbackUrl: "/login" });
+    // หมายเหตุ: ไม่ต้องใช้ router.replace และไม่ต้องยุ่งกับ localStorage
   };
 
   return (
@@ -31,22 +31,13 @@ export default function LogoutButton() {
         >
           <div className="w-[92vw] max-w-sm rounded-2xl p-5 neon-card">
             <h3 className="neon-title mb-3 text-base font-semibold">ยืนยันการออกจากระบบ</h3>
-            <p className="text-sm text-[var(--muted)] mb-5">
-              คุณต้องการออกจากระบบตอนนี้หรือไม่?
-            </p>
+            <p className="text-sm text-[var(--muted)] mb-5">คุณต้องการออกจากระบบตอนนี้หรือไม่?</p>
 
             <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setOpen(false)}
-                className="btn-ghost"
-              >
-                ยกเลิก
-              </button>
-              <button
-                onClick={doLogout}
+              <button onClick={() => setOpen(false)} className="btn-ghost">ยกเลิก</button>
+              <button onClick={doLogout}
                 className="rounded-xl px-4 py-2 font-semibold bg-[var(--cyan)] text-[#001418]
-                           shadow-[0_10px_28px_var(--cyan-soft)]"
-              >
+                           shadow-[0_10px_28px_var(--cyan-soft)]">
                 ออกจากระบบ
               </button>
             </div>
