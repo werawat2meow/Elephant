@@ -32,6 +32,7 @@ export default function LoginClient() {
       email,
       password: pw,
     });
+    console.log("[client] signIn result →", res);
 
     if (!res || !res.ok) {
       setLoading(false);

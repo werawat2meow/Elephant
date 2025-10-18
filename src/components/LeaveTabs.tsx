@@ -1,7 +1,7 @@
 "use client";
 import NeonTabs from "@/components/NeonTabs";
 
-export type LeaveMenuKey = "Overview" | "Requests" | "Approvals" | "Reports";
+export type LeaveMenuKey = "Dashboard" | "Requests" | "Approvals" | "Reports";
 
 export default function LeaveTabs({
   value,
@@ -12,7 +12,7 @@ export default function LeaveTabs({
   onChange: (v: LeaveMenuKey) => void;
   className?: string;
 }) {
-  const items: LeaveMenuKey[] = ["Overview", "Requests", "Approvals", "Reports"];
+  const items: LeaveMenuKey[] = ["Dashboard", "Requests", "Approvals", "Reports"];
   return (
     <NeonTabs
       className={className}

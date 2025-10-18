@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
+  console.log("[GET /api/user] session ->", session);
   const role = (session as any)?.role as Role | undefined;
   if (!role) return NextResponse.json({ error: "Unauthhorized" }, { status: 401 });
 
@@ -30,6 +31,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
+    console.log("[POST /api/users] session →", session);
   const meRole = (session as any)?.role as Role | undefined;
   if (!meRole) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -39,6 +41,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { email, name, password, role } = await req.json();
+  console.log("[POST /api/users] payload →", { email, name, role });
 
   //กัน Admin สร้าง Admin ด้วยกันเอง (เอาเฉพาะ MASTER เท่านั้น)
   if (meRole === "ADMIN" && role === "ADMIN") {

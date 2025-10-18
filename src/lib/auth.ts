@@ -20,8 +20,19 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) { if (user) token.role = (user as any).role; return token; },
-    async session({ session, token }) { (session as any).role = token.role; return session; },
+    async jwt({ token, user, account, trigger, session }) {
+      console.log("[cb] jwt:before →", { token, user, account, trigger, session });
+      if (user && (user as any).role) token.role = (user as any).role; // ยัด role ลง token
+      console.log("[cb] jwt:after  →", token);
+      return token;
+    },
+    async session({ session, token }) {
+      console.log("[cb] session:before →", { session, token });
+      if (token && (token as any).role) (session as any).role = (token as any).role; // map role
+      console.log("[cb] session:after  →", session);
+      return session;
+    },
   },
   pages: { signIn: "/login" },
+  debug: true, // เปิด log ของ next-auth เพิ่ม
 };
