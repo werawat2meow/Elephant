@@ -152,6 +152,7 @@ export default function ProfileSettingsPage() {
 
           <Field label="Line ID" placeholder="@lineid" />
           <Field label="เริ่มงานวันที่" type="date" />
+          <Field label="วันหยุดประจำสัปดาห์ (Default)" placeholder="ตัวอย่าง วันอาทิตย์" />
         </div>
       </div>
 

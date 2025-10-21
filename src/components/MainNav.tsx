@@ -9,7 +9,7 @@ type AppRole = "MASTER_ADMIN" | "ADMIN" | "MANAGER" | "USER" | undefined;
 
 // เมนูเดิมของคุณ
 const items = [
-  { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/requests",  label: "Requests" },
   { href: "/approvals", label: "Approvals" },
   { href: "/reports",   label: "Reports" },
