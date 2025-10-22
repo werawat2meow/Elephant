@@ -10,6 +10,10 @@ const MOCK_EMPLOYEES: Employee[] = [
   { id: "3", empNo: "EMP003", name: "อาทิตย์ อรุณรุ่ง", dept: "หน่วยเทคนิค" },
 ];
 
+type EmployeeForm = {
+
+}
+
 export default function ProfileSettingsPage() {
   // --- รูปพนักงาน ---
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -150,9 +154,10 @@ export default function ProfileSettingsPage() {
           <Field label="ลาวันเกิด" placeholder="จำนวนวัน" />
           <Field label="วันหยุดประจำปี" placeholder="(จำนวนวัน)" />
 
-          <Field label="Line ID" placeholder="@lineid" />
+          <Field label="Line ID" placeholder="@line id" />
           <Field label="เริ่มงานวันที่" type="date" />
           <Field label="วันหยุดประจำสัปดาห์ (Default)" placeholder="ตัวอย่าง วันอาทิตย์" />
+          <Field label="Email" placeholder="Emp001@company.com" type="email"/>
         </div>
       </div>
 
