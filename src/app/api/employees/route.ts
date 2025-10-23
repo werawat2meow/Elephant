@@ -30,6 +30,10 @@ export async function POST(req: NextRequest) {
   if (!body.empNo || !body.firstName || !body.lastName) {
     return NextResponse.json({ error: "empNo/firstName/lastName is required" }, { status: 400 });
   }
+  
+  if (body.email && !/^\S+@\S+\.\S+$/.test(body.email)) {
+    return NextResponse.json({ error: "รูปแบบอีเมลไม่ถูกต้อง" }, { status: 400 });
+  }
 
   try {
     const emp = await prisma.employee.create({
@@ -64,7 +68,7 @@ export async function POST(req: NextRequest) {
   } catch (e: any) {
     if (e.code === "P2002") {
       // unique constraint (เช่น empNo หรือ idCard ซ้ำ)
-      return NextResponse.json({ error: "Duplicate empNo or idCard" }, { status: 409 });
+      return NextResponse.json({ error: "ข้อมูลซ้ำ (empNo หรือ email หรือ idCard)" }, { status: 409 });
     }
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }

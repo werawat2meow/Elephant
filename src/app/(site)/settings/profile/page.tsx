@@ -11,7 +11,30 @@ const MOCK_EMPLOYEES: Employee[] = [
 ];
 
 type EmployeeForm = {
+  empNo: string;
+  prefix?: string;
+  email?: string;
+  firstName: string;
+  lastName: string;
+  idCard?: string;
+  org?: string;
+  department?: string;
+  division?: string;
+  unit?: string;
+  levelP?: string;
+  lineId?: string;
+  startDate?: string;
+  weeklyHoliday?: string;
 
+  vacationDays?: number;
+  businessDays?: number;
+  sickdays?: number;
+  ordainDays?: number;
+  maternityDays?: number;
+  unpaidDays?: number;
+  birthdayDays?: number;
+  annualHolidays?: number;
+  photoUrl?: string; 
 }
 
 export default function ProfileSettingsPage() {
@@ -22,6 +45,37 @@ export default function ProfileSettingsPage() {
 
   const pickFile = () => inputRef.current?.click();
   const [openEmpModal, setOpenEmpModal] = useState(false);
+
+  const [form, setForm] = useState<EmployeeForm>({
+    empNo: "",
+    firstName: "",
+    lastName: "",
+  });
+  const [saving, setSaving] = useState(false);
+
+  const setF = (patch: Partial<EmployeeForm>) =>
+    setForm(prev => ({ ...prev, ...patch }));
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/employees", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data?.error ?? "บันทึกไม่สำเร็จ");
+        return;
+      }
+      alert("บันทึกสำเร็จ");
+    } catch {
+      alert("เกิดข้อผิดพลาด");
+    } finally {
+      setSaving(false);
+    }
+  }
 
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -130,13 +184,19 @@ export default function ProfileSettingsPage() {
             - sm: 2 คอลัมน์
             - lg: 3 คอลัมน์ */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 min-w-0">
-          <Field label="คำนำหน้าชื่อ" placeholder="เช่น นาย / นาง / นางสาว" />
-          <Field label="ชื่อ" placeholder="ชื่อ" />
-          <Field label="นามสกุล" placeholder="นามสกุล" />
+          <Field label="คำนำหน้าชื่อ" placeholder="เช่น นาย / นาง / นางสาว" 
+            value={form.prefix ?? ""} onChange={v => setF({ prefix: v })} />
+          <Field label="ชื่อ" placeholder="ชื่อ" 
+            value={form.firstName} onChange={v => setF({ firstName: v})}/>
+          <Field label="นามสกุล" placeholder="นามสกุล" 
+            value={form.lastName} onChange={v => setF({ lastName: v})}/>
 
-          <Field label="รหัสพนักงาน (EMP No.)" placeholder="เช่น EMP001" />
-          <Field label="บัตรประชาชน" placeholder="เลขบัตรประชาชน" />
-          <Field label="สังกัด" placeholder="สังกัด" />
+          <Field label="รหัสพนักงาน (EMP No.)" placeholder="เช่น EMP001" 
+            value={form.empNo} onChange={v => setF({ empNo: v})}/>
+          <Field label="บัตรประชาชน" placeholder="เลขบัตรประชาชน" 
+            value={form.idCard ?? ""} onChange={v => setF({ idCard: v})} />
+          <Field label="สังกัด" placeholder="สังกัด" 
+            value={form.org ?? ""} onChange={v => setF({ org: v})}/>
 
           <Field label="แผนก" placeholder="แผนก" />
           <Field label="ฝ่าย" placeholder="ฝ่าย" />
@@ -168,10 +228,11 @@ export default function ProfileSettingsPage() {
         </button>
         <button
           type="button"
-          onClick={() => alert("ตัวอย่าง: เก็บไฟล์รูปไว้ใน state แล้ว พร้อมส่งด้วย FormData ได้")}
+          onClick={handleSave}
+          disabled={saving}
           className="rounded-xl px-5 py-2 font-extrabold bg-[var(--cyan)] text-[#001418] shadow-[0_10px_28px_var(--cyan-soft)]"
         >
-          บันทึก
+          {saving ? "กำลังบันทึก..." : "บันทึก"}
         </button>
       </div>
       <EmployeeListModal
@@ -187,10 +248,14 @@ function Field({
   label,
   type = "text",
   placeholder,
+  value,
+  onChange,
 }: {
   label: string;
   type?: string;
   placeholder?: string;
+  value?: string | number;
+  onChange?: (v: string) => void;
 }) {
   return (
     <label className="block min-w-0"> {/* min-w-0 กัน overflow ตอนอยู่ใน grid */}
@@ -198,6 +263,8 @@ function Field({
       <input
         type={type}
         placeholder={placeholder}
+        value={value as any}
+        onChange={(e) => onChange?.(e.target.value)}
         className="neon-input w-full rounded-xl p-3"
       />
     </label>
