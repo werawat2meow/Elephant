@@ -57,25 +57,61 @@ export default function ProfileSettingsPage() {
     setForm(prev => ({ ...prev, ...patch }));
 
   async function handleSave() {
-    setSaving(true);
-    try {
-      const res = await fetch("/api/employees", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data?.error ?? "บันทึกไม่สำเร็จ");
+  console.log("[EMP_FORM] submit clicked, form =", form);
+
+  // (ถ้ามี) validate ฝั่ง client แบบสั้น ๆ
+  if (!form.empNo)   { console.warn("[EMP_FORM] missing empNo");   alert("กรุณากรอกรหัสพนักงาน"); return; }
+  if (!form.firstName || !form.lastName) { console.warn("[EMP_FORM] missing name"); alert("กรุณากรอกชื่อ-นามสกุล"); return; }
+  if (!form.email)   { console.warn("[EMP_FORM] missing email");   alert("กรุณากรอกอีเมล"); return; }
+  if (!form.idCard)  { console.warn("[EMP_FORM] missing idCard");  alert("กรุณากรอกเลขบัตรประชาชน"); return; }
+
+  setSaving(true);
+  try {
+    let photoUrlForDb = form.photoUrl ?? null;
+
+    // 1) upload
+    if (photoFile) {
+      const fd = new FormData();
+      fd.append("file", photoFile);
+      console.log("[UPLOAD] sending /api/uploads, file =", photoFile.name, photoFile.type, photoFile.size);
+
+      const up = await fetch("/api/uploads", { method: "POST", body: fd });
+      const upData = await up.json();
+      console.log("[UPLOAD] status =", up.status, "resp =", upData);
+
+      if (!up.ok) {
+        console.error("[UPLOAD] failed:", upData);
+        alert(upData?.error ?? "อัปโหลดรูปไม่สำเร็จ");
         return;
       }
-      alert("บันทึกสำเร็จ");
-    } catch {
-      alert("เกิดข้อผิดพลาด");
-    } finally {
-      setSaving(false);
+      photoUrlForDb = upData.url as string;
     }
+
+    // 2) payload
+    const payload = { ...form, photoUrl: photoUrlForDb };
+    console.log("[EMP_CREATE] POST /api/employees payload =", payload);
+
+    const res = await fetch("/api/employees", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    console.log("[EMP_CREATE] status =", res.status, "resp =", data);
+
+    if (!res.ok) {
+      alert(data?.error ?? "บันทึกไม่สำเร็จ");
+      return;
+    }
+    alert("บันทึกสำเร็จ");
+  } catch (e) {
+    console.error("[EMP_CREATE] unexpected error:", e);
+    alert("เกิดข้อผิดพลาด");
+  } finally {
+    setSaving(false);
   }
+}
 
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -143,8 +179,8 @@ export default function ProfileSettingsPage() {
             className="rounded-2xl border border-white/10 bg-[var(--input)] p-4 text-center"
           >
             <div className="aspect-square w-full rounded-xl overflow-hidden bg-black/20 flex items-center justify-center">
-              {photoUrl ? (
-                <img src={photoUrl} alt="Employee photo preview" className="h-full w-full object-cover" />
+              {(photoUrl || form.photoUrl) ? (
+                <img src={(photoUrl ?? form.photoUrl)!} className="h-full w-full object-cover" />
               ) : (
                 <div className="text-[var(--muted)] text-sm whitespace-normal break-words">
                   ยังไม่มีรูป
@@ -165,8 +201,8 @@ export default function ProfileSettingsPage() {
               <button type="button" onClick={pickFile} className="btn btn-soft">
                 เพิ่มรูป
               </button>
-              {photoUrl && (
-                <button type="button" onClick={removePhoto} className="btn btn-outline">
+              {form.photoUrl && !photoUrl && (
+                <button type="button" onClick={() => setF({ photoUrl: "" })} className="btn btn-outline">
                   ลบรูป
                 </button>
               )}
@@ -234,6 +270,8 @@ export default function ProfileSettingsPage() {
             value={form.weeklyHoliday ?? ""} onChange={v => setF({ weeklyHoliday: v })} />
           <Field label="Email" placeholder="Emp001@company.com" type="email"
             value={form.email ?? ""} onChange={v => setF({ email: v })}/>
+          <Field label="Photo URL (ถ้ามี)" placeholder="https://..."
+            value={form.photoUrl ?? ""} onChange={(v) => setF({ photoUrl: v })} />
         </div>
       </div>
 

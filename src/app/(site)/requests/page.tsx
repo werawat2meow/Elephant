@@ -23,6 +23,9 @@ type EmployeeForm = {
   section?: string;
   department?: string;
   LevelP?: string;
+  email: string;
+  idCard: string;
+  photoUrl?: string;
 };
 
 type LeaveForm = {
@@ -78,6 +81,8 @@ const history: LeaveHistoryItem[] = [
 
   const [emp, setEmp] = useState<EmployeeForm>({
     Nametitle: "นาย",
+    email: "",   // ใส่ค่าเริ่มต้น
+    idCard: "",  // ใส่ค่าเริ่มต้น
   });
   const [leave, setLeave] = useState<LeaveForm>({ session: "Full Day" });
   const [submitting, setSubmitting] = useState(false);
