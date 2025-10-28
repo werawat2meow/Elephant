@@ -107,3 +107,15 @@ model Employee {
 
   @@index([empNo])
 }
+
+model LeaveRight {
+  id        Int      @id @default(autoincrement())
+  level     String   @unique
+  vacation  Int      @default(0)
+  business  Int      @default(0)
+  sick      Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([level])
+}

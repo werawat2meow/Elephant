@@ -19,7 +19,7 @@ export default function LogoutButton() {
         className="px-4 py-2 rounded-xl font-semibold text-[#001418]
                    bg-gradient-to-r from-[#ff3c3c] to-[#ff6b6b]
                    shadow-[0_0_12px_rgba(255,60,60,.6),0_0_24px_rgba(255,60,60,.4)]
-                   hover:scale-105 active:scale-95 transition-transform duration-150 shrink-0"
+                   hover:scale-105 active:scale-95 transition-transform duration-150 shrink-0 cursor-pointer"
       >
         Logout
       </button>

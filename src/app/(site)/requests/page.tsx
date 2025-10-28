@@ -379,7 +379,7 @@ const history: LeaveHistoryItem[] = [
         <aside className="space-y-6">
           <div className="neon-card rounded-2xl p-5">
             <h2 className="neon-title mb-3 text-lg font-semibold">
-              สิทธิวันลา (ตัวอย่าง/แก้ไขตามนโยบายบริษัท)
+              สิทธิวันลา (ตามตำแหน่ง)
             </h2>
             <ul className="space-y-2 text-sm">
               <li className="flex items-center justify-between rounded-xl bg-[var(--input)] px-3 py-2">

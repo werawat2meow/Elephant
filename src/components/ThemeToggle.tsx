@@ -32,7 +32,7 @@ export default function ThemeToggle({ className="" }: { className?: string }) {
       aria-label="Toggle theme"
       title={theme === "theme-dark" ? "Switch to Light" : "Switch to Dark"}
       className={`rounded-xl px-3 py-2 font-semibold bg-[var(--cyan)] text-[#001418]
-                  shadow-[0_8px_26px_rgba(8,247,254,.35)] hover:brightness-110 ${className}`}
+                  shadow-[0_8px_26px_rgba(8,247,254,.35)] hover:brightness-110 cursor-pointer ${className}`}
     >
       {theme === "theme-dark" ? "☀️ Light" : "🌙 Dark"}
     </button>
