@@ -52,28 +52,79 @@ export async function PUT(req: NextRequest) {
   const role = (session as any)?.role as Role | undefined;
   if (!canWrite(role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const rows = await req.json() as Array<{ id?: number; title?: string; date?: string; note?: string | null }>;
-  if (!Array.isArray(rows)) return NextResponse.json({ error: "invalid payload" }, { status: 400 });
+  type Row = { id?: number | string; title?: string; date?: string; note?: string | null };
+  const body = await req.json() as Row[] | { rows: Row[]; deletedIds?: Array<number | string> };
+
+  const rows: Row[] = Array.isArray(body) ? body : body.rows;
+  const deletedIdsRaw = Array.isArray(body) ? [] : (body.deletedIds ?? []);
+  const deletedIds = deletedIdsRaw
+    .map(v => Number(v))
+    .filter(v => Number.isFinite(v) && v > 0);
+
+  if (!Array.isArray(rows)) {
+    return NextResponse.json({ error: "invalid payload" }, { status: 400 });
+  }
+
+  const cleaned = rows
+    .map(r => ({
+      id: (r.id === 0 || r.id) ? Number(r.id) : undefined,
+      title: (r.title ?? "").trim(),
+      date: (r.date ?? "").trim(), // YYYY-MM-DD
+      note: ((r.note ?? "") as string).trim() || null,
+    }))
+    .filter(r => r.title && r.date);
+
+  const toStartOfDayUTC = (d: string) => new Date(`${d}T00:00:00Z`);
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // กลยุทธ์: ลบทั้งหมดทิ้งแล้วสร้างใหม่ตาม payload (เรียบง่าย/นิ่ง)
-      await tx.holiday.deleteMany({});
-      const created = await Promise.all(
-        rows
-          .filter(r => (r.title?.trim() && r.date?.trim()))
-          .map(r => tx.holiday.create({
+      const existing = await tx.holiday.findMany();
+      const existingById = new Map(existing.map(e => [e.id, e]));
+
+      let created = 0;
+      let updated = 0;
+      let deleted = 0;
+
+      // 1) update by id, create if no id
+      for (const r of cleaned) {
+        if (Number.isFinite(r.id) && existingById.has(r.id!)) {
+          await tx.holiday.update({
+            where: { id: r.id! },
             data: {
-              title: r.title!.trim(),
-              date: new Date(r.date!),
-              note: (r.note ?? "").trim() || null,
-            }
-          }))
-      );
-      return created;
+              title: r.title,
+              date: toStartOfDayUTC(r.date),
+              note: r.note,
+            },
+          });
+          updated++;
+        } else {
+          await tx.holiday.create({
+            data: {
+              title: r.title,
+              date: toStartOfDayUTC(r.date),
+              note: r.note,
+            },
+          });
+          created++;
+        }
+      }
+
+      // 2) delete only explicit ids
+      if (deletedIds.length > 0) {
+        const delRes = await tx.holiday.deleteMany({
+          where: { id: { in: deletedIds } },
+        });
+        deleted += delRes.count;
+      }
+
+      return { created, updated, deleted, totalPayload: cleaned.length };
     });
-    return NextResponse.json({ count: result.length }, { status: 200 });
-  } catch (e) {
+
+    return NextResponse.json(result, { status: 200 });
+  } catch (e: any) {
+    if (e?.code === "P2002") {
+      return NextResponse.json({ error: "duplicate (date,title)" }, { status: 409 });
+    }
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -82,12 +133,32 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await getServerSession(authOptions);
   const role = (session as any)?.role as Role | undefined;
-  if (!canWrite(role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!canWrite(role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
-  const { searchParams } = new URL(req.url);
-  const id = Number(searchParams.get("id"));
-  if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
+  try {
+    const { searchParams } = new URL(req.url);
+    const idParam = searchParams.get("id");
+    if (!idParam) {
+      return NextResponse.json({ error: "id is required"}, { status: 400 });
+    }
 
-  await prisma.holiday.delete({ where: { id } });
-  return NextResponse.json({ ok: true });
+    const id = Number(idParam);
+    if (!Number.isFinite(id) || id <= 0) {
+      return NextResponse.json({ error: "invalid id" }, { status: 400 });
+    }
+
+    const deleted = await prisma.holiday.delete({ where: { id } });
+    return NextResponse.json({ ok: true, deletedId: deleted.id }, { status: 200 });
+  } catch (e: any) {
+    if (e?.code === "P2025") {
+      return NextResponse.json({ error: "not found" }, { status: 404 });
+    }
+    if (e?.code === "P2003") {
+      // FK constraint failed (เช่นมีตารางอื่นอ้างถึงอยู่)
+      return NextResponse.json({ error: "cannot delete: record is in use" }, { status: 409 });
+    }
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
 }

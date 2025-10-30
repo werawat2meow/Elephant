@@ -12,6 +12,7 @@ const makeRow = (): HolidayRow => ({ title: "", date: "", note: "" });
 
 export default function AnnualHolidaysSection() {
   const [rows, setRows] = useState<HolidayRow[]>([makeRow()]);
+  const [deletedIds, setDeletedIds] = useState<number[]>([]); // ✅ ใหม่
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] =
@@ -27,12 +28,13 @@ export default function AnnualHolidaysSection() {
           setRows(data.map(d => ({
             id: d.id,
             title: d.title,
-            date: d.date.slice(0,10), // YYYY-MM-DD
+            date: d.date.slice(0,10),
             note: d.note ?? "",
           })));
         } else {
           setRows([makeRow()]);
         }
+        setDeletedIds([]); // ✅ reset
       } catch {
         // เงียบๆ
       } finally {
@@ -45,23 +47,58 @@ export default function AnnualHolidaysSection() {
     setRows(prev => prev.map((r, i) => i === idx ? { ...r, ...patch } : r));
 
   const addRow = () => setRows(prev => [...prev, makeRow()]);
-  const removeRow = (idx: number) =>
-    setRows(prev => prev.filter((_, i) => i !== idx));
+
+  const removeRow = (idx: number) => {
+    setRows(prev => {
+      const draft = [...prev];
+      const removed = draft[idx];
+      // ✅ ถ้ามี id ให้เก็บไว้ลบตอนส่ง PUT
+      if (removed?.id) {
+        setDeletedIds(d => Array.from(new Set([...d, removed.id!])));
+      }
+      draft.splice(idx, 1);
+      return draft.length ? draft : [makeRow()];
+    });
+  };
 
   // ส่งขึ้น DB ทั้งชุด
   const handlePublish = async () => {
     setSaving(true);
     try {
-      const cleaned = rows.filter(r => r.title.trim() || r.date.trim() || r.note.trim());
+      const cleaned = rows
+        .map(r => ({
+          id: r.id,
+          title: r.title.trim(),
+          date: r.date.trim(),
+          note: r.note.trim(),
+        }))
+        .filter(r => r.title || r.date || r.note);
+
+      const payload = { rows: cleaned, deletedIds }; // ✅ ส่ง deletedIds ไปด้วย
+
       const res = await fetch("/api/holidays", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cleaned),
+        body: JSON.stringify(payload),
       });
+
       if (!res.ok) {
         const j = await res.json().catch(()=>null);
         throw new Error(j?.error || "Save failed");
       }
+
+      // ✅ หลังบันทึก ดึงรายการใหม่มาซิงก์ id ของแถวที่พึ่ง create
+      const r = await fetch("/api/holidays", { cache: "no-store" });
+      const data: Array<{ id:number; title:string; date:string; note:string|null }> = await r.json();
+      setRows(
+        (data ?? []).map(d => ({
+          id: d.id,
+          title: d.title,
+          date: d.date.slice(0,10),
+          note: d.note ?? "",
+        }))
+      );
+      setDeletedIds([]); // ✅ เคลียร์หลังบันทึกสำเร็จ
       setToast({ type: "success", msg: `บันทึกแล้ว ${cleaned.length} รายการ` });
     } catch (e:any) {
       setToast({ type: "error", msg: e.message || "บันทึกล้มเหลว" });
