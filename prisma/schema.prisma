@@ -132,3 +132,23 @@ model Holiday {
   @@unique([date, title])           // กันซ้ำ (ถ้าต้องการ)
   @@index([date])
 }
+
+
+model Approver {
+  id         Int      @id @default(autoincrement())
+  prefix     String?           // คำนำหน้าชื่อ
+  firstNameTh String
+  lastNameTh  String
+  firstNameEn String?          // ถ้าอยากเก็บภาษาอังกฤษด้วย
+  lastNameEn  String?
+  empNo      String   @unique  // รหัสพนักงาน (unique)
+  citizenId  String?  @unique  // บัตรประชาชน (ถ้าจะ unique)
+  org        String?           // สังกัด
+  department String?           // แผนก
+  division   String?           // ฝ่าย
+  unit       String?           // หน่วย
+  level      String?           // Level P
+  lineId     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
