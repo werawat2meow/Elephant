@@ -135,20 +135,22 @@ model Holiday {
 
 
 model Approver {
-  id         Int      @id @default(autoincrement())
-  prefix     String?           // คำนำหน้าชื่อ
+  id          Int      @id @default(autoincrement())
+  prefix      String?
   firstNameTh String
   lastNameTh  String
-  firstNameEn String?          // ถ้าอยากเก็บภาษาอังกฤษด้วย
+  firstNameEn String?
   lastNameEn  String?
-  empNo      String   @unique  // รหัสพนักงาน (unique)
-  citizenId  String?  @unique  // บัตรประชาชน (ถ้าจะ unique)
-  org        String?           // สังกัด
-  department String?           // แผนก
-  division   String?           // ฝ่าย
-  unit       String?           // หน่วย
-  level      String?           // Level P
-  lineId     String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  empNo       String   @unique
+  citizenId   String?  @unique
+  org         String?
+  department  String?
+  division    String?
+  unit        String?
+  level       String?
+  lineId      String?
+  email       String?  @unique   // ✅ เพิ่มเพื่อผูกกับตาราง User
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
