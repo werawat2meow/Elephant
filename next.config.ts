@@ -1,7 +1,11 @@
-import type { NextConfig } from "next";
+// บังคับปิด lightningcss ทั้งด้วย env และ config (กันเหนียว)
+process.env.NEXT_DISABLE_LIGHTNINGCSS = '1';
 
-const nextConfig: NextConfig = {
-  /* config options here */
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    optimizeCss: false, // <= ปิด lightningcss
+  },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
