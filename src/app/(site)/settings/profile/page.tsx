@@ -1,0 +1,326 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import EmployeeListModal, { type Employee } from "@/components/EmployeeListModal";
+
+
+const MOCK_EMPLOYEES: Employee[] = [
+  { id: "1", empNo: "EMP001", name: "สมชาย ใจดี", dept: "พัฒนาระบบ" },
+  { id: "2", empNo: "EMP002", name: "สุนีย์ สายบุญ", dept: "ฝ่ายบุคคล" },
+  { id: "3", empNo: "EMP003", name: "อาทิตย์ อรุณรุ่ง", dept: "หน่วยเทคนิค" },
+];
+
+type EmployeeForm = {
+  empNo: string;
+  prefix?: string;
+  email?: string;
+  firstName: string;
+  lastName: string;
+  idCard?: string;
+  org?: string;
+  department?: string;
+  division?: string;
+  unit?: string;
+  levelP?: string;
+  lineId?: string;
+  startDate?: string;
+  weeklyHoliday?: string;
+
+  vacationDays?: number;
+  businessDays?: number;
+  sickDays?: number;
+  ordainDays?: number;
+  maternityDays?: number;
+  unpaidDays?: number;
+  birthdayDays?: number;
+  annualHolidays?: number;
+  photoUrl?: string; 
+}
+
+export default function ProfileSettingsPage() {
+  // --- รูปพนักงาน ---
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const pickFile = () => inputRef.current?.click();
+  const [openEmpModal, setOpenEmpModal] = useState(false);
+
+  const [form, setForm] = useState<EmployeeForm>({
+    empNo: "",
+    firstName: "",
+    lastName: "",
+  });
+  const [saving, setSaving] = useState(false);
+
+  const setF = (patch: Partial<EmployeeForm>) =>
+    setForm(prev => ({ ...prev, ...patch }));
+
+  async function handleSave() {
+  console.log("[EMP_FORM] submit clicked, form =", form);
+
+  // (ถ้ามี) validate ฝั่ง client แบบสั้น ๆ
+  if (!form.empNo)   { console.warn("[EMP_FORM] missing empNo");   alert("กรุณากรอกรหัสพนักงาน"); return; }
+  if (!form.firstName || !form.lastName) { console.warn("[EMP_FORM] missing name"); alert("กรุณากรอกชื่อ-นามสกุล"); return; }
+  if (!form.email)   { console.warn("[EMP_FORM] missing email");   alert("กรุณากรอกอีเมล"); return; }
+  if (!form.idCard)  { console.warn("[EMP_FORM] missing idCard");  alert("กรุณากรอกเลขบัตรประชาชน"); return; }
+
+  setSaving(true);
+  try {
+    let photoUrlForDb = form.photoUrl ?? null;
+
+    // 1) upload
+    if (photoFile) {
+      const fd = new FormData();
+      fd.append("file", photoFile);
+      console.log("[UPLOAD] sending /api/uploads, file =", photoFile.name, photoFile.type, photoFile.size);
+
+      const up = await fetch("/api/uploads", { method: "POST", body: fd });
+      const upData = await up.json();
+      console.log("[UPLOAD] status =", up.status, "resp =", upData);
+
+      if (!up.ok) {
+        console.error("[UPLOAD] failed:", upData);
+        alert(upData?.error ?? "อัปโหลดรูปไม่สำเร็จ");
+        return;
+      }
+      photoUrlForDb = upData.url as string;
+    }
+
+    // 2) payload
+    const payload = { ...form, photoUrl: photoUrlForDb };
+    console.log("[EMP_CREATE] POST /api/employees payload =", payload);
+
+    const res = await fetch("/api/employees", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    console.log("[EMP_CREATE] status =", res.status, "resp =", data);
+
+    if (!res.ok) {
+      alert(data?.error ?? "บันทึกไม่สำเร็จ");
+      return;
+    }
+    alert("บันทึกสำเร็จ");
+  } catch (e) {
+    console.error("[EMP_CREATE] unexpected error:", e);
+    alert("เกิดข้อผิดพลาด");
+  } finally {
+    setSaving(false);
+  }
+}
+
+
+  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (!f.type.startsWith("image/")) {
+      alert("กรุณาเลือกไฟล์รูปภาพ");
+      return;
+    }
+    setPhotoFile(f);
+  }
+
+  // drag & drop
+  function onDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    const f = e.dataTransfer.files?.[0];
+    if (!f) return;
+    if (!f.type.startsWith("image/")) {
+      alert("กรุณาเลือกไฟล์รูปภาพ");
+      return;
+    }
+    setPhotoFile(f);
+  }
+  const onDrag = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); };
+
+  // preview URL
+  useEffect(() => {
+    if (!photoFile) { setPhotoUrl(null); return; }
+    const url = URL.createObjectURL(photoFile);
+    setPhotoUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photoFile]);
+
+  function removePhoto() {
+    setPhotoFile(null);
+    setPhotoUrl(null);
+    if (inputRef.current) inputRef.current.value = "";
+  }
+
+  return (
+    <section role="tabpanel" aria-label="เพิ่มข้อมูล" className="neon-card rounded-2xl p-4 sm:p-6">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="neon-title text-base sm:text-lg font-semibold mb-4">เพิ่มข้อมูล</h2>
+        <button
+        type="button"
+        className="neon-title rounded-xl px-4 py-2 border border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5 cursor-pointer"
+        onClick={() => setOpenEmpModal(true)}
+        >
+          รายชื่อพนักงาน
+        </button>
+      </div>
+      
+
+      {/* NOTE: ทำ responsive ที่นี่
+          - โมบาย: 1 คอลัมน์ (รูปอยู่บน, ฟอร์มอยู่ล่าง)
+          - md:   2 คอลัมน์ (ซ้ายรูป 280-320px, ขวาฟอร์มยืด)
+          - lg+:  คงแบบ md แต่เพิ่มช่องฟอร์มได้มากขึ้น */}
+      <div className="grid gap-6 md:grid-cols-[minmax(240px,320px)_minmax(0,1fr)]">
+        {/* ซ้าย: อัปโหลด/แสดงรูป */}
+        <div className="min-w-0">
+          <div
+            onDrop={onDrop}
+            onDragOver={onDrag}
+            onDragEnter={onDrag}
+            className="rounded-2xl border border-white/10 bg-[var(--input)] p-4 text-center"
+          >
+            <div className="aspect-square w-full rounded-xl overflow-hidden bg-black/20 flex items-center justify-center">
+              {(photoUrl || form.photoUrl) ? (
+                <img src={(photoUrl ?? form.photoUrl)!} className="h-full w-full object-cover" />
+              ) : (
+                <div className="text-[var(--muted)] text-sm whitespace-normal break-words">
+                  ยังไม่มีรูป
+                  <div className="mt-1 opacity-80">You can drag and drop images here.</div>
+                </div>
+              )}
+            </div>
+
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onFileChange}
+            />
+
+            <div className="mt-3 flex flex-col sm:flex-row gap-2 justify-center">
+              <button type="button" onClick={pickFile} className="btn btn-soft">
+                เพิ่มรูป
+              </button>
+              {form.photoUrl && !photoUrl && (
+                <button type="button" onClick={() => setF({ photoUrl: "" })} className="btn btn-outline">
+                  ลบรูป
+                </button>
+              )}
+            </div>
+
+            <p className="mt-2 text-xs text-[var(--muted)] break-words">
+              รองรับไฟล์ภาพ เช่น JPG, PNG (แนะนำขนาดสี่เหลี่ยมจัตุรัส)
+            </p>
+          </div>
+        </div>
+
+        {/* ขวา/ด้านล่าง: ฟอร์มข้อมูล */}
+        {/* ปรับกริดฟอร์ม: 
+            - xs: 1 คอลัมน์
+            - sm: 2 คอลัมน์
+            - lg: 3 คอลัมน์ */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 min-w-0">
+          <Field label="คำนำหน้าชื่อ" placeholder="เช่น นาย / นาง / นางสาว" 
+            value={form.prefix ?? ""} onChange={v => setF({ prefix: v })} />
+          <Field label="ชื่อ" placeholder="ชื่อ" 
+            value={form.firstName} onChange={v => setF({ firstName: v })}/>
+          <Field label="นามสกุล" placeholder="นามสกุล" 
+            value={form.lastName} onChange={v => setF({ lastName: v })}/>
+
+          <Field label="รหัสพนักงาน (EMP No.)" placeholder="เช่น EMP001" 
+            value={form.empNo} onChange={v => setF({ empNo: v })}/>
+          <Field label="บัตรประชาชน" placeholder="เลขบัตรประชาชน" 
+            value={form.idCard ?? ""} onChange={v => setF({ idCard: v })} />
+          <Field label="สังกัด" placeholder="สังกัด" 
+            value={form.org ?? ""} onChange={v => setF({ org: v })}/>
+
+          <Field label="แผนก" placeholder="แผนก" 
+            value={form.department ?? ""} onChange={v => setF({ department: v })}/>
+          <Field label="ฝ่าย" placeholder="ฝ่าย" 
+            value={form.division ?? ""} onChange={v => setF({ division: v })}/>
+          <Field label="หน่วย" placeholder="หน่วย" 
+            value={form.unit ?? ""} onChange={v => setF({ unit: v })}/>
+
+          <Field label="Level P" placeholder="P1 / P2 / P3 ..." 
+            value={form.levelP ?? ""} onChange={v => setF({ levelP: v })}/>
+          <Field label="สิทธิ์ลาป่วย" placeholder="(อายุงาน + ตำแหน่ง)" 
+            value={form.sickDays ?? 0} onChange={v => setF({ sickDays: v === "" ? 0 : Number(v) })}/>
+          <Field label="สิทธิ์ลาพักร้อน" placeholder="(อายุงาน + ตำแหน่ง)" 
+            value={form.vacationDays ?? 0} onChange={v => setF({ vacationDays: v === "" ? 0 : Number(v) })}/>
+
+          <Field label="สิทธิ์ลากิจ" placeholder="(อายุงาน + ตำแหน่ง)" 
+            value={form.businessDays ?? 0} onChange={v => setF({ businessDays: v === "" ? 0 : Number(v) })}/>
+          <Field label="สิทธิ์ลาบวช" placeholder="จำนวนวัน" 
+            value={form.ordainDays ?? 0} onChange={v => setF({ ordainDays: v ==="" ? 0 : Number(v) })}/>
+          <Field label="สิทธิ์ลาคลอด" placeholder="จำนวนวัน" 
+            value={form.maternityDays ?? 0} onChange={v => setF({ maternityDays: v ==="" ? 0 : Number(v) })}/>
+
+          <Field label="ลาโดยไม่ได้รับค่าจ้าง" placeholder="จำนวนวัน" 
+            value={form.unpaidDays ?? 0} onChange={v => setF({ unpaidDays: v ==="" ? 0 : Number(v) })}/>
+          <Field label="ลาวันเกิด" placeholder="จำนวนวัน" 
+            value={form.birthdayDays ?? 0} onChange={v => setF({ birthdayDays: v ==="" ? 0 : Number(v) })}/>
+          <Field label="วันหยุดประจำปี" placeholder="(จำนวนวัน)" 
+            value={form.annualHolidays ?? 0} onChange={v => setF({ annualHolidays: v ==="" ? 0 : Number(v) })}/>
+
+          <Field label="Line ID" placeholder="@line id" 
+            value={form.lineId ?? ""} onChange={v => setF({ lineId: v })}/>
+          <Field label="เริ่มงานวันที่" type="date" 
+            value={form.startDate ?? ""} onChange={v => setF({ startDate: v })}/>
+          <Field label="วันหยุดประจำสัปดาห์ (Default)" placeholder="ตัวอย่าง วันอาทิตย์" 
+            value={form.weeklyHoliday ?? ""} onChange={v => setF({ weeklyHoliday: v })} />
+          <Field label="Email" placeholder="Emp001@company.com" type="email"
+            value={form.email ?? ""} onChange={v => setF({ email: v })}/>
+          <Field label="Photo URL (ถ้ามี)" placeholder="https://..."
+            value={form.photoUrl ?? ""} onChange={(v) => setF({ photoUrl: v })} />
+        </div>
+      </div>
+
+      {/* ปุ่ม */}
+      <div className="mt-5 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+        <button type="button" className="rounded-xl px-4 py-2 border border-white/10 hover:bg-white/5">
+          ยกเลิก
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="rounded-xl px-5 py-2 font-extrabold bg-[var(--cyan)] text-[#001418] shadow-[0_10px_28px_var(--cyan-soft)]"
+        >
+          {saving ? "กำลังบันทึก..." : "บันทึก"}
+        </button>
+      </div>
+      <EmployeeListModal
+        open={openEmpModal}
+        onClose={() => setOpenEmpModal(false)}
+        employees={MOCK_EMPLOYEES}
+      />
+    </section>
+  );
+}
+
+function Field({
+  label,
+  type = "text",
+  placeholder,
+  value,
+  onChange,
+}: {
+  label: string;
+  type?: string;
+  placeholder?: string;
+  value?: string | number;
+  onChange?: (v: string) => void;
+}) {
+  return (
+    <label className="block min-w-0"> {/* min-w-0 กัน overflow ตอนอยู่ใน grid */}
+      <span className="mb-1 block text-sm whitespace-normal break-words">{label}</span>
+      <input
+        type={type}
+        placeholder={placeholder}
+        value={value as any}
+        onChange={(e) => onChange?.(e.target.value)}
+        className="neon-input w-full rounded-xl p-3"
+      />
+    </label>
+  );
+}

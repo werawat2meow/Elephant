@@ -1,3 +1,5 @@
-export default function Page() {
-  return <div className="neon-card rounded-2xl p-6">Coming soon…</div>;
+import { redirect } from "next/navigation";
+
+export default function SettingsIndex() {
+  redirect("/settings/profile");
 }
