@@ -37,12 +37,6 @@ const init: Form = {
   email: "",
 };
 
-const MOCK_APPROVERS: Approver[] = [
-  { id: "1", empNo: "EMP201", name: "สมชาย ใจดี", dept: "การเงิน", level: "P3" },
-  { id: "2", empNo: "EMP245", name: "สุนีย์ สายบุญ", dept: "บุคคล", level: "P2" },
-  { id: "3", empNo: "EMP318", name: "อาทิตย์ อรุณรุ่ง", dept: "เทคนิค", level: "P4" },
-];
-
 export default function ApproversPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Form>(init);
@@ -50,14 +44,38 @@ export default function ApproversPage() {
 
   const setF = (patch: Partial<Form>) => setForm((p) => ({ ...p, ...patch }));
 
-  const handlePick = (a: Approver) => {
-    setF({
-      empNo: a.empNo ?? "",
-      department: a.dept ?? "",
-      level: a.level ?? "",
-    });
-    setOpen(false);
-  };
+const handlePick = (a: Approver) => {
+  console.log("[PICK]", a);
+
+  setForm(prev => ({
+    ...prev,
+    // คำนำหน้า
+    prefix: a._raw?.prefix ?? prev.prefix ?? "",
+
+    // ชื่อ–นามสกุล
+    firstNameTh: a._raw?.firstNameTh ?? prev.firstNameTh ?? "",
+    lastNameTh:  a._raw?.lastNameTh  ?? prev.lastNameTh  ?? "",
+    firstNameEn: a._raw?.firstNameEn ?? prev.firstNameEn ?? "",
+    lastNameEn:  a._raw?.lastNameEn  ?? prev.lastNameEn  ?? "",
+
+    // รหัสพนักงาน / บัตรประชาชน
+    empNo:      a.empNo ?? a._raw?.empNo ?? "",
+    citizenId:  a._raw?.citizenId ?? prev.citizenId ?? "",
+
+    // โครงสร้างหน่วยงาน
+    org:        a.org        ?? a._raw?.org        ?? "",
+    department: a.dept       ?? a._raw?.department ?? "",
+    division:   a.division   ?? a._raw?.division   ?? "",
+    unit:       a.unit       ?? a._raw?.unit       ?? "",
+    level:      a.level      ?? a._raw?.level      ?? "",
+
+    // อื่น ๆ
+    lineId:     a._raw?.lineId ?? "",
+    email:      a.email ?? a._raw?.email ?? "",
+  }));
+
+  setOpen(false);
+};
 
   async function handleSave() {
     if (!form.firstNameTh || !form.lastNameTh || !form.empNo) {
@@ -152,7 +170,6 @@ export default function ApproversPage() {
       <ApproverListModal
         open={open}
         onClose={() => setOpen(false)}
-        approvers={MOCK_APPROVERS}
         onSelect={handlePick}
       />
     </section>
