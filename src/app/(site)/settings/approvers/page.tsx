@@ -4,6 +4,7 @@ import { useState } from "react";
 import ApproverListModal, { type Approver } from "@/components/ApproverListModal";
 
 type Form = {
+  id?: number | null;
   prefix?: string;
   firstNameTh: string;
   lastNameTh: string;
@@ -21,6 +22,7 @@ type Form = {
 };
 
 const init: Form = {
+  id: null,
   prefix: "",
   firstNameTh: "",
   lastNameTh: "",
@@ -49,6 +51,8 @@ const handlePick = (a: Approver) => {
 
   setForm(prev => ({
     ...prev,
+    // id
+    id: a.id ?? prev.id ?? null,
     // คำนำหน้า
     prefix: a._raw?.prefix ?? prev.prefix ?? "",
 
@@ -77,6 +81,26 @@ const handlePick = (a: Approver) => {
   setOpen(false);
 };
 
+  function mapApproverToForm(a: any): Form {
+    return {
+      id: a.id ?? null,
+      prefix: a.prefix ?? "",
+      firstNameTh: a.firstNameTh ?? "",
+      lastNameTh: a.lastNameTh ?? "",
+      firstNameEn: a.firstNameEn ?? "",
+      lastNameEn: a.lastNameEn ?? "",
+      empNo: a.empNo ?? "",
+      citizenId: a.citizenId ?? "",
+      org: a.org ?? "",
+      department: a.department ?? "",
+      division: a.division ?? "",
+      unit: a.unit ?? "",
+      level: a.level ?? "",
+      lineId: a.lineId ?? "",
+      email: a.email ?? "",
+    };
+  }
+
   async function handleSave() {
     if (!form.firstNameTh || !form.lastNameTh || !form.empNo) {
       alert("กรุณากรอกชื่อ-สกุล (ไทย) และรหัสพนักงาน");
@@ -93,27 +117,32 @@ const handlePick = (a: Approver) => {
 
     setSaving(true);
     try {
-      const payload = {
-        ...form,
-        email: form.email?.trim().toLowerCase(),
-      };
+      const payload = { ...form, email: form.email?.trim().toLowerCase() };
+      const isEdit = !!form.id;
+      const url = isEdit ? `/api/approvers?id=${form.id}` : "/api/approvers";
+      const method = isEdit ? "PUT" : "POST";
 
-      const res = await fetch("/api/approvers", {
-        method: "POST",
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         alert(data?.error ?? "บันทึกไม่สำเร็จ");
         return;
       }
-      if (data?.__tmpPassword) {
+
+      // ✅ คงค่าไว้ตามที่บันทึกสำเร็จ (ใช้ค่าจากเซิร์ฟเวอร์)
+      setForm(mapApproverToForm(data));
+
+      // แจ้งรหัสเริ่มต้นเฉพาะตอน "เพิ่มใหม่" (ถ้ามี)
+      if (!isEdit && data?.__tmpPassword) {
         alert(`บันทึกสำเร็จ\nรหัสเริ่มต้นของผู้ใช้: ${data.__tmpPassword}`);
       } else {
         alert("บันทึกสำเร็จ");
       }
-      setForm(init);
     } catch (e) {
       console.error(e);
       alert("เกิดข้อผิดพลาด");
