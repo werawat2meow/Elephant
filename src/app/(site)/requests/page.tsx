@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LeaveHistoryModal, {
   LeaveHistoryItem,
@@ -137,6 +137,45 @@ const history: LeaveHistoryItem[] = [
       router.push("/dashboard");
     }, 800);
   }
+
+  const [allRights, setAllRights] = useState<Array<{level:string; vacation:number; business:number; sick:number}>>([]);
+  const [loadingAllRights, setLoadingAllRights] = useState(false);
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+
+    (async () => {
+      try {
+        setLoadingAllRights(true);
+
+        const res = await fetch(`/api/leave-rights`, {
+          signal: ctrl.signal,
+          cache: "no-store", // กัน cache ตอน dev ด้วย
+        });
+
+        const raw = await res.json();
+        setAllRights(
+          (raw?.data || []).map((r: any) => ({
+            level: r.level,
+            vacation: r.vacation,
+            business: r.business,
+            sick: r.sick,
+          }))
+        );
+      } catch (e: any) {
+        // 👇 เพิ่มเช็คนี้
+        if (e?.name === "AbortError") return;
+        console.error(e);
+        setAllRights([]);
+      } finally {
+        setLoadingAllRights(false);
+      }
+    })();
+    // ✅ cleanup ปลอดภัย ไม่โยน warning
+    return () => {
+      if (!ctrl.signal.aborted) ctrl.abort("unmounted");
+    };
+  }, []);
 
   return (
     <main className="min-h-dvh bg-[var(--bg)] text-[var(--text)]">
@@ -378,27 +417,35 @@ const history: LeaveHistoryItem[] = [
         {/* ฝั่งขวา: สิทธิวันลา + วันหยุดประจำปี */}
         <aside className="space-y-6">
           <div className="neon-card rounded-2xl p-5">
-            <h2 className="neon-title mb-3 text-lg font-semibold">
-              สิทธิวันลา (ตามตำแหน่ง)
-            </h2>
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-center justify-between rounded-xl bg-[var(--input)] px-3 py-2">
-                <span>Annual Leave</span>
-                <b>10 วัน/ปี</b>
-              </li>
-              <li className="flex items-center justify-between rounded-xl bg-[var(--input)] px-3 py-2">
-                <span>Sick Leave</span>
-                <b>30 วัน/ปี</b>
-              </li>
-              <li className="flex items-center justify-between rounded-xl bg-[var(--input)] px-3 py-2">
-                <span>Leave without pay</span>
-                <b>ตามอนุมัติ</b>
-              </li>
-              <li className="flex items-center justify-between rounded-xl bg-[var(--input)] px-3 py-2">
-                <span>Special Leave</span>
-                <b>ตามระเบียบ HR</b>
-              </li>
-            </ul>
+            <h2 className="neon-title mb-3 text-lg font-semibold">สิทธิวันลา (ทุกระดับ)</h2>
+            {loadingAllRights ? (
+              <p className="text-sm text-[var(--muted)]">กำลังโหลด...</p>
+            ) : allRights.length === 0 ? (
+              <p className="text-sm text-[var(--muted)]">ไม่มีข้อมูล</p>
+            ) : (
+              <div className="overflow-auto rounded-xl border border-white/10">
+                <table className="w-full text-sm">
+                  <thead className="bg-white/5">
+                    <tr>
+                      <th className="px-3 py-2 text-left">Level</th>
+                      <th className="px-3 py-2 text-right">Annual</th>
+                      <th className="px-3 py-2 text-right">Business</th>
+                      <th className="px-3 py-2 text-right">Sick</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allRights.map((r) => (
+                      <tr key={r.level} className="odd:bg-white/0 even:bg-white/5">
+                        <td className="px-3 py-2">{r.level}</td>
+                        <td className="px-3 py-2 text-center">{r.vacation}</td>
+                        <td className="px-3 py-2 text-center">{r.business}</td>
+                        <td className="px-3 py-2 text-center">{r.sick}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           <div className="neon-card rounded-2xl p-5">
