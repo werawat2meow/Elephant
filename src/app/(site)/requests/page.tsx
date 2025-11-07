@@ -173,9 +173,18 @@ const history: LeaveHistoryItem[] = [
     })();
     // ✅ cleanup ปลอดภัย ไม่โยน warning
     return () => {
-      if (!ctrl.signal.aborted) ctrl.abort("unmounted");
+      if (!ctrl.signal.aborted) ctrl.abort();
     };
   }, []);
+
+  const [holidays, setHolidays] = useState<Array<{ id: number; title: string; date: string; note?: string | null }>>([]);
+  const [loadingHolidays, setLoadingHolidays] = useState(false);
+  const [holidaysError, setHolidaysError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const ctrl = new  AbortController();
+  })
+
 
   return (
     <main className="min-h-dvh bg-[var(--bg)] text-[var(--text)]">
