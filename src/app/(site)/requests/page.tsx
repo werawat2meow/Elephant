@@ -182,8 +182,52 @@ const history: LeaveHistoryItem[] = [
   const [holidaysError, setHolidaysError] = useState<string | null>(null);
 
   useEffect(() => {
-    const ctrl = new  AbortController();
-  })
+    const ctrl = new AbortController();
+
+    (async () => {
+      try {
+        setLoadingHolidays(true);
+        setHolidaysError(null);
+
+        const res = await fetch(`/api/holidays`, {
+          signal: ctrl.signal,
+          cache: "no-store",
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          setHolidays([]);
+          setHolidaysError(`โหลดวันหยุดไม่สำเร็จ (${res.status})`);
+          return;
+        }
+
+        const raw = await res.json();
+        const list = (Array.isArray(raw) ? raw : raw?.data) || [];
+
+        setHolidays(
+          list.map((h: any) => ({
+            id: h.id,
+            title: h.title,
+            date: h.date,
+            note: h.note ?? null,
+          }))
+        );
+      } catch (e: any) {
+        // ⬇️ ถ้าถูกยกเลิกเอง ไม่ต้อง log
+        if (ctrl.signal.aborted || e?.name === "AbortError") return;
+        console.error(e);
+        setHolidays([]);
+        setHolidaysError(e?.message || "เกิดข้อผิดพลาดในการโหลดวันหยุด");
+      } finally {
+        setLoadingHolidays(false);
+      }
+    })();
+
+    // ✅ cleanup: ไม่ส่ง reason จะไม่เด้ง "unmounted"
+    return () => {
+      if (!ctrl.signal.aborted) ctrl.abort();
+    };
+  }, []);
 
 
   return (
@@ -461,34 +505,46 @@ const history: LeaveHistoryItem[] = [
             <h2 className="neon-title mb-3 text-lg font-semibold">
               วันหยุดประจำปี (Public Holidays)
             </h2>
-            <div className="max-h-[360px] overflow-auto rounded-xl border border-white/10">
-              <table className="w-full text-sm">
-                <thead className="bg-white/5">
-                  <tr>
-                    <th className="px-3 py-2 text-left w-12">#</th>
-                    <th className="px-3 py-2 text-left">ชื่อวันหยุด</th>
-                    <th className="px-3 py-2 text-left">วันที่</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {DEFAULT_HOLIDAYS.map((h) => (
-                    <tr key={h.no} className="odd:bg-white/0 even:bg-white/5">
-                      <td className="px-3 py-2">{h.no}</td>
-                      <td className="px-3 py-2">{h.name}</td>
-                      <td className="px-3 py-2">
-                        {new Date(h.date).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "numeric",
-                          day: "numeric",
-                        })}
-                      </td>
+
+            {loadingHolidays ? (
+              <p className="text-sm text-[var(--muted)]">กำลังโหลดวันหยุด...</p>
+            ) : holidaysError ? (
+              <p className="text-sm text-red-400">{holidaysError}</p>
+            ) : holidays.length === 0 ? (
+              <p className="text-sm text-[var(--muted)]">ยังไม่มีข้อมูลวันหยุด</p>
+            ) : (
+              <div className="max-h-[360px] overflow-auto rounded-xl border border-white/10">
+                <table className="w-full text-sm">
+                  <thead className="bg-white/5">
+                    <tr>
+                      <th className="px-3 py-2 text-left w-12">#</th>
+                      <th className="px-3 py-2 text-left">ชื่อวันหยุด</th>
+                      <th className="px-3 py-2 text-left">วันที่</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {holidays.map((h, idx) => (
+                      <tr key={h.id} className="odd:bg-white/0 even:bg-white/5">
+                        <td className="px-3 py-2">{idx + 1}</td>
+                        <td className="px-3 py-2">
+                          {h.title}
+                        </td>
+                        <td className="px-3 py-2">
+                          {new Date(h.date).toLocaleDateString("th-TH", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
             <p className="mt-2 text-xs text-[var(--muted)]">
-              * รายการวันหยุดเป็นตัวอย่าง สามารถดึงจากฐานข้อมูลจริงได้ภายหลัง
+              * ข้อมูลดึงจากฐานข้อมูลจริง (Holiday)
             </p>
           </div>
         </aside>
