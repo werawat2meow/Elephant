@@ -549,8 +549,32 @@ useEffect(() => {
                   </tbody>
                 </table>
               </div>
-            )}
+            )} 
           </div>
+          {me && (
+              <div className="neon-card rounded-2xl p-5">
+                <h2 className="neon-title mb-3 text-lg font-semibold">
+                  สิทธิวันลาของฉัน (ปี {new Date().getFullYear() + 543})
+                </h2>
+
+                <div className="grid gap-3 md:grid-cols-3">
+                  <EntBox title="Annual"   data={me.rights} k="vacation" />
+                  <EntBox title="Business" data={me.rights} k="business" />
+                  <EntBox title="Sick"     data={me.rights} k="sick" />
+                  <EntBox title="Ordain"     data={me.rights} k="ordainDays" />
+                  <EntBox title="Maternity"     data={me.rights} k="maternity" />
+                  <EntBox title="Birthday"     data={me.rights} k="birthday" />
+                  <EntBox title="Vacation"     data={me.rights} k="vacation" />
+                  <EntBox title="Unpaid"     data={me.rights} k="vacation" />
+                </div>
+
+                {me.rights.levelFrom && (
+                  <p className="mt-2 text-xs text-[var(--muted)]">
+                    อิงสิทธิ์จากระดับ (Level P): <b>{me.rights.levelFrom}</b>
+                  </p>
+                )}
+              </div>
+            )}
 
           <div className="neon-card rounded-2xl p-5">
             <h2 className="neon-title mb-3 text-lg font-semibold">
@@ -581,11 +605,14 @@ useEffect(() => {
                           {h.title}
                         </td>
                         <td className="px-3 py-2">
-                          {new Date(h.date).toLocaleDateString("th-TH", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })}
+                          {(() => {
+                            const d = new Date(h.date);
+                            if (isNaN(+d)) return h.date; // ถ้า parse ไม่ได้ ให้โชว์ข้อมูลดิบไปก่อน
+                            const day = d.getDate().toString().padStart(2, "0");
+                            const month = (d.getMonth() + 1).toString().padStart(2, "0");
+                            const year = d.getFullYear() + 543; // แปลงเป็น พ.ศ.
+                            return `${day}/${month}/${year}`;
+                          })()}
                         </td>
                       </tr>
                     ))}
@@ -644,3 +671,49 @@ function Input({
     </label>
   );
 }
+  function EntBox({
+    title,
+    data,
+    k,
+  }: {
+    title: string;
+    data: {
+      entitled:  {
+        vacation: number; business: number; sick: number;
+        ordainDays?: number; maternity?: number; birthday?: number; unpaid?: number;
+      };
+      used:      {
+        vacation: number; business: number; sick: number;
+        ordainDays?: number; maternity?: number; birthday?: number; unpaid?: number;
+      };
+      remaining: {
+        vacation: number; business: number; sick: number;
+        ordainDays?: number; maternity?: number; birthday?: number; unpaid?: number;
+      };
+    };
+    k: "vacation" | "business" | "sick" | "ordainDays" | "maternity" | "birthday" | "unpaid";
+  }) {
+    const total = data.entitled[k] ?? 0;
+    const used  = data.used[k] ?? 0;
+    const left  = data.remaining[k] ?? Math.max(0, total - used);
+    const pct   = total > 0 ? Math.min(100, Math.round((used / total) * 100)) : 0;
+
+    return (
+      <div className="rounded-xl border border-white/10 p-3">
+        <div className="mb-1 text-sm opacity-80">{title}</div>
+        <div className="flex items-baseline gap-2">
+          <span className="text-2xl font-bold">{left}</span>
+          {/* <span className="text-xs text-[var(--muted)]">เหลือ / ทั้งหมด {total}</span> */}
+        </div>
+        <div className="mt-2 h-2 w-full rounded bg-white/10">
+          <div
+            className="h-2 rounded bg-[var(--cyan)]"
+            style={{ width: `${pct}%` }}
+            aria-label={`${pct}% used`}
+          />
+        </div>
+        <div className="mt-2 text-xs text-[var(--muted)]">ใช้ไป {used}</div>
+      </div>
+    );
+  }
+
