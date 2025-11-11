@@ -39,18 +39,29 @@ type LeaveForm = {
   handoverTo?: string;
 };
 
-const DEFAULT_HOLIDAYS: { no: number; name: string; date: string }[] = [
-  { no: 1, name: "New Year", date: "2025-01-01" },
-  { no: 2, name: "Makha Bucha", date: "2025-02-12" },
-  { no: 3, name: "Songkran", date: "2025-04-13" },
-  { no: 4, name: "Labor Day", date: "2025-05-01" },
-  { no: 5, name: "Asarnha Bucha", date: "2025-07-09" },
-  { no: 6, name: "King’s Birthday", date: "2025-07-28" },
-  { no: 7, name: "Mother’s Day", date: "2025-08-12" },
-  { no: 8, name: "Chulalongkorn Day", date: "2025-10-23" },
-  { no: 9, name: "Father’s Day", date: "2025-12-05" },
-  { no: 10, name: "Constitution Day", date: "2025-12-10" },
-];
+type MeResponse = {
+  employee: {
+    empNo: string;
+    email?: string|null;
+    prefix?: string|null;
+    firstName: string;
+    lastName: string;
+    position?: string|null;
+    section?: string|null;
+    department?: string|null;
+    levelP?: string|null;
+    idCard?: string|null;
+    photoUrl?: string|null;
+  };
+    rights: {
+    levelFrom: string | null; // <-- F ใหญ่
+    entitled: { vacation:number; business:number; sick:number };
+    used:      { vacation:number; business:number; sick:number };
+    remaining: { vacation:number; business:number; sick:number };
+  };
+} | null;
+
+
 
 export default function LeavePage() {
   const router = useRouter();
@@ -229,6 +240,57 @@ const history: LeaveHistoryItem[] = [
     };
   }, []);
 
+  const [me, setMe] = useState<MeResponse>(null);
+const [loadingMe, setLoadingMe] = useState(false);
+const [meError, setMeError] = useState<string|null>(null);
+
+useEffect(() => {
+  const ctrl = new AbortController();
+  (async () => {
+    try {
+      setLoadingMe(true);
+      setMeError(null);
+      const res = await fetch("/api/employees/me", {
+        signal: ctrl.signal,
+        credentials: "include",
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        setMe(null);
+        setMeError(`โหลดข้อมูลพนักงานไม่สำเร็จ (${res.status})`);
+        return;
+      }
+      const raw = await res.json();
+      console.log("ME API ->", raw);
+
+      // เซ็ตฟอร์มพนักงานให้พร้อมกรอกลา (คงโครงสร้างเดิมของคุณ)
+      setEmp(s => ({
+      ...s,
+      Nametitle: raw.employee.prefix ?? s.Nametitle ?? "",
+      empNo:     raw.employee.empNo   ?? s.empNo     ?? "",
+      name:      `${raw.employee.firstName ?? ""} ${raw.employee.lastName ?? ""}`.trim(),
+      position:  raw.employee.position  ?? s.position   ?? "",
+      section:   raw.employee.section   ?? s.section    ?? "",   // <-- section
+      department:raw.employee.department?? s.department ?? "",
+      LevelP:    raw.employee.levelP    ?? s.LevelP     ?? "",
+      email:     raw.employee.email     ?? s.email,
+      idCard:    raw.employee.idCard    ?? s.idCard,
+      photoUrl:  raw.employee.photoUrl  ?? s.photoUrl,
+    }));
+
+      setMe(raw);
+    } catch (e: any) {
+      if (ctrl.signal.aborted || e?.name === "AbortError") return;
+      console.error(e);
+      setMe(null);
+      setMeError(e?.message || "เกิดข้อผิดพลาด");
+    } finally {
+      setLoadingMe(false);
+    }
+  })();
+  return () => { if (!ctrl.signal.aborted) ctrl.abort(); };
+}, []);
+
 
   return (
     <main className="min-h-dvh bg-[var(--bg)] text-[var(--text)]">
@@ -253,53 +315,42 @@ const history: LeaveHistoryItem[] = [
         <section className="lg:col-span-2 space-y-6">
           {/* ข้อมูลพนักงาน */}
           <div className="neon-card rounded-2xl p-5">
-            <h2 className="neon-title mb-3 text-lg font-semibold">
-              ข้อมูลพนักงาน
-            </h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="neon-title text-lg font-semibold">ข้อมูลพนักงาน</h2>
+            </div>
+
             <div className="grid gap-3 md:grid-cols-2">
-              <Input
-                label="คำนำหน้าชื่อ"
-                value={emp.Nametitle ?? ""}
-                onChange={(v) => onChangeEmp("Nametitle", v)}
-              />
+              <Input label="รหัสพนักงาน (EMP No.)" value={emp.empNo ?? ""} readOnly />
               <Input
                 label="วันที่ยื่น (Auto)"
-                value={new Date().toLocaleDateString()}
+                value={new Date().toLocaleDateString("th-TH")}
                 readOnly
               />
-              <Input
-                required
-                label="รหัสพนักงาน (EMP No.)"
-                value={emp.empNo ?? ""}
-                onChange={(v) => onChangeEmp("empNo", v)}
-              />
-              <Input
-                required
-                label="ชื่อ - สกุล"
-                value={emp.name ?? ""}
-                onChange={(v) => onChangeEmp("name", v)}
-              />
-              <Input
-                label="ตำแหน่ง"
-                value={emp.position ?? ""}
-                onChange={(v) => onChangeEmp("position", v)}
-              />
-              <Input
-                label="Section"
-                value={emp.section ?? ""}
-                onChange={(v) => onChangeEmp("section", v)}
-              />
-              <Input
-                label="Department"
-                value={emp.department ?? ""}
-                onChange={(v) => onChangeEmp("department", v)}
-              />
-              <Input
-                label="Level P"
-                value={emp.LevelP ?? ""}
-                onChange={(v) => onChangeEmp("LevelP", v)}
-              />
+
+              {/* ✅ เพิ่มคำนำหน้าชื่อ */}
+              <Input label="คำนำหน้าชื่อ" value={emp.Nametitle ?? ""} readOnly />
+              <Input label="ชื่อ - สกุล" value={emp.name ?? ""} readOnly />
+
+              <Input label="Email" value={emp.email ?? ""} readOnly />
+              <Input label="เลขบัตรประชาชน" value={emp.idCard ?? ""} readOnly />
+
+              <Input label="ตำแหน่ง" value={emp.position ?? ""} readOnly />
+              <Input label="Department" value={emp.department ?? ""} readOnly />
+
+              <Input label="Section" value={emp.section ?? ""} readOnly />
+              <Input label="Level P" value={emp.LevelP ?? ""} readOnly />
+
+              {/* ถ้ามีรูปภาพ */}
+              {/* <img
+                src={emp.photoUrl ?? ""}
+                alt="Employee Photo"
+                className="h-16 w-16 rounded-lg object-cover border border-white/10"
+              /> */}
             </div>
+
+            {meError && (
+              <p className="text-xs text-red-400 mt-2">{meError}</p>
+            )}
           </div>
 
           {/* ประเภทการลา */}
