@@ -4,7 +4,16 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-type Entitlement = { vacation: number; business: number; sick: number };
+type Entitlement = {
+  vacation: number;
+  business: number;
+  sick: number;
+  ordainDays: number;
+  maternity: number;
+  birthday: number;
+  unpaid: number;
+  annualHolidays: number;
+};
 
 function startOfYearUTC(y: number) { return new Date(Date.UTC(y, 0, 1, 0, 0, 0)); }
 function startOfNextYearUTC(y: number) { return new Date(Date.UTC(y + 1, 0, 1, 0, 0, 0)); }
@@ -20,10 +29,15 @@ const typeMap: Record<string, keyof Entitlement | undefined> = {
   "Business Leave": "business",
   "Personal Leave": "business",
   "Sick Leave": "sick",
+  "Ordain Leave": "ordainDays",
+  "Maternity Leave": "maternity",
+  "Birthday Leave": "birthday",
+  "Leave without Pay": "unpaid",
 };
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+ try {
+ const session = await getServerSession(authOptions);
 
   // --- สำคัญมาก: เพิ่ม console.log เพื่อดีบั๊ก Session User ---
   console.log("--- API /api/employees/me ---");
@@ -63,47 +77,83 @@ export async function GET() {
 
   // --- ถ้าหา employee พบแล้ว โค้ดส่วนที่เหลือจะทำงานต่อตามปกติ ---
   console.log("Employee found successfully. Processing entitlements.");
-
+const toN = (x: any) => (typeof x === "number" && isFinite(x) ? x : 0);
   // 2) สิทธิ์: ถ้ามี LeaveRight ของ levelP ใช้อันนั้น ไม่งั้นใช้ fields ใน Employee เอง
   let entitled: Entitlement = {
-    vacation: employee.vacationDays ?? 0,
-    business: employee.businessDays ?? 0,
-    sick: employee.sickDays ?? 0,
+    vacation:        toN(employee.vacationDays),
+    business:        toN(employee.businessDays),
+    sick:            toN(employee.sickDays),
+    ordainDays:      toN(employee.ordainDays),
+    maternity:       toN(employee.maternityDays),
+    birthday:        toN(employee.birthdayDays),
+    unpaid:          toN(employee.unpaidDays),
+    annualHolidays:  toN(employee.annualHolidays),
   };
 
   if (employee.levelP) {
     const lr = await prisma.leaveRight.findUnique({ where: { level: employee.levelP } });
     if (lr) {
-      entitled = { vacation: lr.vacation, business: lr.business, sick: lr.sick };
+      entitled.vacation = toN(lr.vacation);
+      entitled.business = toN(lr.business);
+      entitled.sick     = toN(lr.sick);
     }
   }
 
   // 3) คำนวนใบลาที่ใช้ไปใน "ปีนี้" (เฉพาะอนุมัติแล้ว)
-  const year = new Date().getUTCFullYear();
-  const from = startOfYearUTC(year);
-  const to = startOfNextYearUTC(year);
+  // const year = new Date().getUTCFullYear();
+  // const from = startOfYearUTC(year);
+  // const to = startOfNextYearUTC(year);
 
-  const approved = await prisma.leave.findMany({
-    where: {
-      user: { email: employee.email ?? undefined }, // ตรวจสอบว่า `user` relation มี email หรือไม่
-      status: "APPROVED",
-      startDate: { gte: from, lt: to },
-    },
-    select: { type: true, startDate: true, endDate: true },
-  });
+const from = new Date(Date.UTC(new Date().getUTCFullYear(), 0, 1));
+const to   = new Date(Date.UTC(new Date().getUTCFullYear() + 1, 0, 1));
 
-  const used: Entitlement = { vacation: 0, business: 0, sick: 0 };
-  for (const l of approved) {
-    const bucket = typeMap[l.type];
-    if (!bucket) continue;
-    const n = dayDiffInclusive(new Date(l.startDate), new Date(l.endDate));
-    used[bucket] += n;
-  }
+// ✅ สร้าง where แบบปลอดภัย
+const whereLeave: any = {
+  status: "APPROVED",
+  startDate: { gte: from, lt: to },
+};
+
+if (employee?.email) {
+  whereLeave.user = { is: { email: employee.email } };
+} else if (typeof employee?.userId === "number") {
+  // กันกรณี employee ไม่มี email แต่ผูกกับ userId
+  whereLeave.userId = employee.userId;
+}
+
+const approved = await prisma.leave.findMany({
+  where: whereLeave,
+  select: {
+    kind: true,
+    startDate: true,
+    endDate: true,
+    session: true,
+    requestedDays: true,
+  },
+});
+
+  // const used: Entitlement = { vacation: 0, business: 0, sick: 0 };
+  // for (const l of approved) {
+  //   const bucket = typeMap[l.type];
+  //   if (!bucket) continue;
+  //   const n = dayDiffInclusive(new Date(l.startDate), new Date(l.endDate));
+  //   used[bucket] += n;
+  // }
+
+  const used: Entitlement = {
+    vacation: 0, business: 0, sick: 0,
+    ordainDays: 0, maternity: 0, birthday: 0, unpaid: 0,
+    annualHolidays: 0, // 🟢 ไม่ใช่ใบลา
+  };
 
   const remaining: Entitlement = {
-    vacation: Math.max(0, entitled.vacation - used.vacation),
-    business: Math.max(0, entitled.business - used.business),
-    sick: Math.max(0, entitled.sick - used.sick),
+    vacation:        Math.max(0, entitled.vacation   - used.vacation),
+    business:        Math.max(0, entitled.business   - used.business),
+    sick:            Math.max(0, entitled.sick       - used.sick),
+    ordainDays:      Math.max(0, entitled.ordainDays - used.ordainDays),
+    maternity:       Math.max(0, entitled.maternity  - used.maternity),
+    birthday:        Math.max(0, entitled.birthday   - used.birthday),
+    unpaid:          Math.max(0, entitled.unpaid     - used.unpaid),
+    annualHolidays:  entitled.annualHolidays, // 🟢 ไม่ลด
   };
 
   // 4) ส่งข้อมูล employee + สิทธิ์
@@ -123,4 +173,11 @@ export async function GET() {
     },
     rights: { entitled, used, remaining, levelFrom: employee.levelP ?? null },
   });
+ } catch (e: any){
+    console.error("GET /api/employees/me error:", e);
+    return NextResponse.json(
+      { error: e?.message || "internal_error" },
+      { status: 500 }
+    );
+  }
 }

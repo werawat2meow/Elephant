@@ -6,14 +6,24 @@ import LeaveHistoryModal, {
   LeaveHistoryItem,
 } from "@/components/LeaveHistoryModal";
 
-type LeaveType =
-  | "Annual Leave"
-  | "Sick Leave"
-  | "Leave without pay"
-  | "Maternity / Cremation / Military / Marriage Leave"
-  | "Shift Change"
-  | "Holiday Change"
-  | "OT";
+type LeaveKind =
+  | "ANNUAL" | "SICK" | "BUSINESS" | "UNPAID"
+  | "BIRTHDAY" | "ORDAIN" | "MATERNITY"
+  | "SHIFT_CHANGE" | "HOLIDAY_CHANGE" | "OT";
+
+// รายการปุ่มที่จะแสดงใน UI
+const LEAVE_TYPES: Array<{ label: string; kind: LeaveKind }> = [
+  { label: "Annual Leave",        kind: "ANNUAL" },
+  { label: "Sick Leave",          kind: "SICK" },
+  { label: "Personal Leave",      kind: "BUSINESS" },  // (= Business)
+  { label: "Leave without Pay",   kind: "UNPAID" },
+  { label: "Birthday Leave",      kind: "BIRTHDAY" },
+  { label: "Monkhood Leave",      kind: "ORDAIN" },
+  { label: "Maternity Leave",     kind: "MATERNITY" },
+  { label: "Shift Change",        kind: "SHIFT_CHANGE" },
+  { label: "Holiday Change",      kind: "HOLIDAY_CHANGE" },
+  { label: "OT",                  kind: "OT" },
+];
 
 type EmployeeForm = {
   Nametitle?: string;
@@ -29,7 +39,7 @@ type EmployeeForm = {
 };
 
 type LeaveForm = {
-  leaveType?: LeaveType;
+  leaveType?: LeaveKind; // ← เดิมเป็น LeaveType ภาษาไทย
   fromDate?: string;
   toDate?: string;
   session?: "Full Day" | "Morning (Half)" | "Afternoon (Half)";
@@ -54,12 +64,24 @@ type MeResponse = {
     photoUrl?: string|null;
   };
     rights: {
-    levelFrom: string | null; // <-- F ใหญ่
-    entitled: { vacation:number; business:number; sick:number };
-    used:      { vacation:number; business:number; sick:number };
-    remaining: { vacation:number; business:number; sick:number };
-  };
-} | null;
+      levelFrom: string | null;
+      entitled: {
+        vacation:number; business:number; sick:number;
+        ordainDays:number; maternity:number; birthday:number; unpaid:number;
+        annualHolidays:number;
+      };
+      used: {
+        vacation:number; business:number; sick:number;
+        ordainDays:number; maternity:number; birthday:number; unpaid:number;
+        annualHolidays:number;
+      };
+      remaining: {
+        vacation:number; business:number; sick:number;
+        ordainDays:number; maternity:number; birthday:number; unpaid:number;
+        annualHolidays:number;
+      };
+    };
+  } | null;
 
 
 
@@ -124,30 +146,57 @@ const history: LeaveHistoryItem[] = [
     return "";
   }
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const err = validate();
-    if (err) {
-      alert(err);
-      return;
+  function getSessionLabel(s?: LeaveForm["session"]) {
+  return s || "Full Day";
     }
-    if (!agree) {
-      alert("กรุณายืนยันว่าข้อมูลถูกต้อง");
-      return;
+    async function uploadIfAny(file: File | null | undefined) {
+      if (!file) return null;
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/uploads", { method: "POST", body: fd, credentials: "include" });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j?.error || "อัปโหลดไฟล์ไม่สำเร็จ");
+      return j?.url || j?.data?.url || null;
     }
+
+async function onSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  const err = validate();
+  if (err) return alert(err);
+  if (!agree) return alert("กรุณายืนยันว่าข้อมูลถูกต้อง");
+
+  try {
     setSubmitting(true);
+    const attachmentUrl = await uploadIfAny(leave.attachment ?? null);
 
-    // ยังไม่มี backend: สาธิตการส่งข้อมูล
-    const payload = { employee: emp, leave, totalDays };
-    console.log("submit leave:", payload);
+    const payload = {
+      kind: leave.leaveType,                    // "ANNUAL" | "SICK" | ...
+      startDate: leave.fromDate,
+      endDate: leave.toDate,
+      sessionLabel: getSessionLabel(leave.session), // "Full Day" | "Morning (Half)" | "Afternoon (Half)"
+      reason: leave.reason ?? "",
+      contact: leave.contact ?? "",
+      handoverTo: leave.handoverTo ?? "",
+      attachmentUrl,
+    };
 
-    // mock เสร็จ
-    setTimeout(() => {
-      setSubmitting(false);
-      alert("ส่งคำขอลาสำเร็จ (ตัวอย่าง)");
-      router.push("/dashboard");
-    }, 800);
+    const res = await fetch("/api/leaves", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (!res.ok || !json?.ok) throw new Error(json?.error || "ส่งคำขอลาไม่สำเร็จ");
+
+    alert("ส่งคำขอลาสำเร็จ");
+    router.push("/dashboard");
+  } catch (e: any) {
+    alert(e?.message || "เกิดข้อผิดพลาด");
+  } finally {
+    setSubmitting(false);
   }
+}
 
   const [allRights, setAllRights] = useState<Array<{level:string; vacation:number; business:number; sick:number}>>([]);
   const [loadingAllRights, setLoadingAllRights] = useState(false);
@@ -359,35 +408,19 @@ useEffect(() => {
               ประเภทการลา
             </h2>
             <div className="grid gap-3 md:grid-cols-2">
-              {(
-                [
-                  "Public Holidays",
-                  "Annual Leave",
-                  "Sick Leave",
-                  "Personal Leave",
-                  "Relygious Leave",
-                  "Monkhood Leave",
-                  "Haji Leave",
-                  "Birthday Leave",
-                  "Leave without Pay",
-                ] as LeaveType[]
-              ).map((t) => (
-                <label
-                  key={t}
+              {LEAVE_TYPES.map((t) => (
+                <label key={t.kind}
                   className={`rounded-xl border border-white/10 p-3 cursor-pointer transition ${
-                    leave.leaveType === t
-                      ? "bg-[var(--input)] ring-2 ring-[var(--cyan)]"
-                      : "bg-transparent hover:bg-white/5"
-                  }`}
-                >
+                    leave.leaveType === t.kind ? "bg-[var(--input)] ring-2 ring-[var(--cyan)]" : "bg-transparent hover:bg-white/5"
+                  }`}>
                   <input
                     type="radio"
                     name="leaveType"
                     className="mr-2 accent-[var(--cyan)]"
-                    checked={leave.leaveType === t}
-                    onChange={() => onChangeLeave("leaveType", t)}
+                    checked={leave.leaveType === t.kind}
+                    onChange={() => onChangeLeave("leaveType", t.kind)}
                   />
-                  {t}
+                  {t.label}
                 </label>
               ))}
             </div>
@@ -508,12 +541,12 @@ useEffect(() => {
                 ยกเลิก
               </button>
               <button
-                type="submit"
-                disabled={submitting}
-                className="rounded-xl px-5 py-2 font-semibold bg-[var(--cyan)] text-[#001418] shadow-[0_10px_28px_var(--cyan-soft)] disabled:opacity-50"
-              >
-                {submitting ? "กำลังส่ง..." : "ส่งคำขอลา"}
-              </button>
+                  type="submit"
+                  disabled={submitting || !leave.leaveType}   // 👈 เพิ่มเงื่อนไขนี้
+                  className="rounded-xl px-5 py-2 font-semibold bg-[var(--cyan)] text-[#001418] shadow-[0_10px_28px_var(--cyan-soft)] disabled:opacity-50"
+                >
+                  {submitting ? "กำลังส่ง..." : "ส่งคำขอลา"}
+                </button>
             </div>
           </form>
         </section>
@@ -558,14 +591,14 @@ useEffect(() => {
                 </h2>
 
                 <div className="grid gap-3 md:grid-cols-3">
-                  <EntBox title="Annual"   data={me.rights} k="vacation" />
-                  <EntBox title="Business" data={me.rights} k="business" />
-                  <EntBox title="Sick"     data={me.rights} k="sick" />
-                  <EntBox title="Ordain"     data={me.rights} k="ordainDays" />
-                  <EntBox title="Maternity"     data={me.rights} k="maternity" />
-                  <EntBox title="Birthday"     data={me.rights} k="birthday" />
-                  <EntBox title="Vacation"     data={me.rights} k="vacation" />
-                  <EntBox title="Unpaid"     data={me.rights} k="vacation" />
+                  <EntBox title="Sick"            data={me.rights} k="sick" />
+                  <EntBox title="Business"        data={me.rights} k="business" />
+                  <EntBox title="Annual"          data={me.rights} k="vacation" />
+                  <EntBox title="Holidays"        data={me.rights} k="annualHolidays" />
+                  <EntBox title="Unpaid"          data={me.rights} k="unpaid" />
+                  <EntBox title="Birthday"        data={me.rights} k="birthday" />
+                  <EntBox title="Ordain"          data={me.rights} k="ordainDays" />
+                  <EntBox title="Maternity"       data={me.rights} k="maternity" />
                 </div>
 
                 {me.rights.levelFrom && (
@@ -679,41 +712,52 @@ function Input({
     title: string;
     data: {
       entitled:  {
-        vacation: number; business: number; sick: number;
-        ordainDays?: number; maternity?: number; birthday?: number; unpaid?: number;
+        vacation:number; business:number; sick:number;
+        ordainDays:number; maternity:number; birthday:number; unpaid:number;
+        annualHolidays:number;
       };
       used:      {
-        vacation: number; business: number; sick: number;
-        ordainDays?: number; maternity?: number; birthday?: number; unpaid?: number;
+        vacation:number; business:number; sick:number;
+        ordainDays:number; maternity:number; birthday:number; unpaid:number;
+        annualHolidays:number;
       };
       remaining: {
-        vacation: number; business: number; sick: number;
-        ordainDays?: number; maternity?: number; birthday?: number; unpaid?: number;
+        vacation:number; business:number; sick:number;
+        ordainDays:number; maternity:number; birthday:number; unpaid:number;
+        annualHolidays:number;
       };
     };
-    k: "vacation" | "business" | "sick" | "ordainDays" | "maternity" | "birthday" | "unpaid";
+    k:
+      | "vacation"
+      | "business"
+      | "sick"
+      | "ordainDays"
+      | "maternity"
+      | "birthday"
+      | "unpaid"
+      | "annualHolidays";
   }) {
-    const total = data.entitled[k] ?? 0;
-    const used  = data.used[k] ?? 0;
-    const left  = data.remaining[k] ?? Math.max(0, total - used);
-    const pct   = total > 0 ? Math.min(100, Math.round((used / total) * 100)) : 0;
+      const total = data.entitled[k] ?? 0;
+      const used  = data.used[k] ?? 0;
+      const left  = data.remaining[k] ?? Math.max(0, total - used);
+      const pct   = total > 0 ? Math.min(100, Math.round((used / total) * 100)) : 0;
 
-    return (
-      <div className="rounded-xl border border-white/10 p-3">
-        <div className="mb-1 text-sm opacity-80">{title}</div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold">{left}</span>
-          {/* <span className="text-xs text-[var(--muted)]">เหลือ / ทั้งหมด {total}</span> */}
+      return (
+        <div className="rounded-xl border border-white/10 p-3">
+          <div className="mb-1 text-sm opacity-80">{title}</div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold">{left}</span>
+            {/* <span className="text-xs text-[var(--muted)]">เหลือ / ทั้งหมด {total}</span> */}
+          </div>
+          <div className="mt-2 h-2 w-full rounded bg-white/10">
+            <div
+              className="h-2 rounded bg-[var(--cyan)]"
+              style={{ width: `${pct}%` }}
+              aria-label={`${pct}% used`}
+            />
+          </div>
+          <div className="mt-2 text-xs text-[var(--muted)]">ใช้ไป {used}</div>
         </div>
-        <div className="mt-2 h-2 w-full rounded bg-white/10">
-          <div
-            className="h-2 rounded bg-[var(--cyan)]"
-            style={{ width: `${pct}%` }}
-            aria-label={`${pct}% used`}
-          />
-        </div>
-        <div className="mt-2 text-xs text-[var(--muted)]">ใช้ไป {used}</div>
-      </div>
-    );
-  }
+      );
+    }
 
