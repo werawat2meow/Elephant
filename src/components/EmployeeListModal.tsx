@@ -89,16 +89,30 @@ export default function EmployeeListModal({
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="w-full max-w-3xl rounded-2xl border border-white/15 bg-white text-slate-900 p-4 shadow-2xl dark:bg-[#0b1220] dark:text-slate-100" onClick={(e)=>e.stopPropagation()}>
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">รายชื่อพนักงาน</h3>
-          <button onClick={onClose} className="rounded-xl px-3 py-1 border border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5">
-            ปิด
-          </button>
-        </div>
+return (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto"
+    onClick={onClose}
+    role="dialog"
+    aria-modal="true"
+  >
+    <div
+      className="w-full max-w-3xl max-h-[85vh] rounded-2xl border border-white/15 bg-white text-slate-900 p-4 shadow-2xl dark:bg-[#0b1220] dark:text-slate-100 flex flex-col"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div className="mb-3 flex items-center justify-between shrink-0">
+        <h3 className="text-lg font-semibold">รายชื่อพนักงาน</h3>
+        <button
+          onClick={onClose}
+          className="rounded-xl px-3 py-1 border border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"
+        >
+          ปิด
+        </button>
+      </div>
 
+      {/* Search */}
+      <div className="shrink-0">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -106,8 +120,11 @@ export default function EmployeeListModal({
           className="neon-input w-full rounded-xl p-3 border border-slate-300 bg-white text-slate-900 placeholder-slate-400
                      dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:placeholder-slate-500"
         />
+      </div>
 
-        <div className="mt-3 rounded-xl border border-slate-200 overflow-hidden dark:border-white/10">
+      {/* Table (ส่วนที่เลื่อนได้) */}
+      <div className="mt-3 rounded-xl border border-slate-200 overflow-hidden dark:border-white/10 flex-1 min-h-0">
+        <div className="max-h-[60vh] overflow-y-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
               <tr>
@@ -120,14 +137,32 @@ export default function EmployeeListModal({
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} className="px-3 py-4 text-center">กำลังโหลด…</td></tr>
+                <tr>
+                  <td colSpan={5} className="px-3 py-4 text-center">
+                    กำลังโหลด…
+                  </td>
+                </tr>
               ) : error ? (
-                <tr><td colSpan={5} className="px-3 py-4 text-center text-rose-500">{error}</td></tr>
+                <tr>
+                  <td colSpan={5} className="px-3 py-4 text-center text-rose-500">
+                    {error}
+                  </td>
+                </tr>
               ) : list.length === 0 ? (
-                <tr><td colSpan={5} className="px-3 py-4 text-center text-slate-500 dark:text-slate-400">ไม่พบรายการ</td></tr>
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-3 py-4 text-center text-slate-500 dark:text-slate-400"
+                  >
+                    ไม่พบรายการ
+                  </td>
+                </tr>
               ) : (
                 list.map((e) => (
-                  <tr key={e.id} className="border-t border-slate-200 hover:bg-slate-50 dark:border-white/5 dark:hover:bg-white/5">
+                  <tr
+                    key={e.id}
+                    className="border-t border-slate-200 hover:bg-slate-50 dark:border-white/5 dark:hover:bg-white/5"
+                  >
                     <td className="px-3 py-2">{e.empNo}</td>
                     <td className="px-3 py-2">{e.name}</td>
                     <td className="px-3 py-2">{e.dept || "-"}</td>
@@ -135,7 +170,10 @@ export default function EmployeeListModal({
                     <td className="px-3 py-2 text-right">
                       <button
                         className="rounded-lg border border-slate-300 px-3 py-1 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"
-                        onClick={() => { onSelect?.(e); onClose(); }}
+                        onClick={() => {
+                          onSelect?.(e);
+                          onClose();
+                        }}
                       >
                         เลือก
                       </button>
@@ -146,8 +184,8 @@ export default function EmployeeListModal({
             </tbody>
           </table>
         </div>
-
       </div>
     </div>
-  );
+  </div>
+);
 }
