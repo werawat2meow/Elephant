@@ -14,7 +14,12 @@
     "@prisma/client": "^6.18.0",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
+<<<<<<< HEAD
     "next": "14.2.8",
+=======
+    "lightningcss": "^1.30.2",
+    "next": "15.5.3",
+>>>>>>> main
     "next-auth": "^4.24.11",
     "react": "18.2.0",
     "react-dom": "18.2.0",
