@@ -10,31 +10,34 @@ export const authOptions: NextAuthOptions = {
       name: "Credentials",
       credentials: { email: {}, password: {} },
       async authorize(c) {
-        console.log("AUTH DEBUG: start authorize", c);
+        // console.log("AUTH DEBUG: start authorize", c); // เปลี่ยนเป็น throw Error แทน
 
         if (!c?.email || !c?.password) {
-          console.log("AUTH DEBUG: missing email or password");
-          return null;
+          // console.log("AUTH DEBUG: missing email or password");
+          throw new Error("Missing email or password from client."); // โยน Error นี้ออกไป
+          // return null; // ไม่ต้อง return null แล้ว
         }
 
         // 1) หา user จาก DB
         const user = await prisma.user.findUnique({
           where: { email: c.email },
         });
-        console.log("AUTH DEBUG: user from DB =", user);
+        // console.log("AUTH DEBUG: user from DB =", user);
 
         if (!user) {
-          console.log("AUTH DEBUG: user not found");
-          return null;
+          // console.log("AUTH DEBUG: user not found");
+          throw new Error("User with this email not found in DB."); // โยน Error นี้ออกไป
+          // return null;
         }
 
         // check password
         const ok = await bcrypt.compare(c.password, user.passwordHash);
-        console.log("AUTH DEBUG: password valid =", ok);
+        // console.log("AUTH DEBUG: password valid =", ok);
 
         if (!ok) {
-          console.log("AUTH DEBUG: password incorrect");
-          return null;
+          // console.log("AUTH DEBUG: password incorrect");
+          throw new Error("Incorrect password provided."); // โยน Error นี้ออกไป
+          // return null;
         }
 
         // 2) หา employee เพื่อนำ idCard
@@ -45,7 +48,7 @@ export const authOptions: NextAuthOptions = {
           select: { idCard: true },
         });
 
-        console.log("AUTH DEBUG: employee =", emp);
+        // console.log("AUTH DEBUG: employee =", emp);
 
         // 3) คืนข้อมูล user เพื่อใส่ใน token
         return {
