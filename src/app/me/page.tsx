@@ -14,7 +14,7 @@ export default function MePage() {
         <div className="neon-card rounded-2xl p-6">
             <h2 className="text-lg font-semibold mb-2">My Session</h2>
             <p className="text-sm bm-2">status: {status}</p>
-            <pre className="text-xs">{JSON.stringify(session, null, 2)}</pre>
+            {/* <pre className="text-xs">{JSON.stringify(session, null, 2)}</pre> */}
         </div>
     );
 }
