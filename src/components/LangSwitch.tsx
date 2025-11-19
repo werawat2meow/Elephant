@@ -5,13 +5,13 @@ import { useEffect, useRef, useState } from "react";
 // ถ้าจะใช้จีนตัวเต็ม เปลี่ยน "zh-CN" เป็น "zh-TW" หรือใส่ทั้งสองตัวก็ได้
 type Lang = "th" | "en" | "my" | "zh-CN";
 
-const LANGS: { code: Lang; label: string; flag: string }[] = [
-  { code: "th",   label: "ไทย",             flag: "🇹🇭" },
-  { code: "en",   label: "English",         flag: "🇬🇧" },
-  { code: "my",   label: "เมียนมา",           flag: "🇲🇲" }, // Burmese
-  { code: "zh-CN",label: "ภาษาจีน",       flag: "🇨🇳" }, // Chinese (Simplified)
+const LANGS: { code: Lang; label: string; shortLabel: string; flag: string }[] = [
+  { code: "th",   label: "ไทย",             shortLabel: "TH",   flag: "🇹🇭" },
+  { code: "en",   label: "English",         shortLabel: "EN",   flag: "🇬🇧" },
+  { code: "my",   label: "เมียนมา",           shortLabel: "MY",   flag: "🇲🇲" }, // Burmese
+  { code: "zh-CN",label: "ภาษาจีน",       shortLabel: "CN",   flag: "🇨🇳" }, // Chinese (Simplified)
   // ถ้าต้องการตัวเต็ม เพิ่มบรรทัดนี้ด้วย:
-  // { code: "zh-TW" as Lang, label: "中文（繁體）", flag: "🇹🇼" },
+  // { code: "zh-TW" as Lang, label: "中文（繁體）", shortLabel: "TW", flag: "🇹🇼" },
 ];
 
 function setCookie(name: string, value: string) {
@@ -90,7 +90,7 @@ export default function LangSwitch({ className = "" }: { className?: string }) {
           {mounted ? active.flag : "🌐"}
         </span>
         <span className="text-sm" suppressHydrationWarning>
-          {mounted ? active.label : ""}
+          {mounted ? active.shortLabel : ""}
         </span>
         <svg width="14" height="14" viewBox="0 0 20 20" className="opacity-70">
           <path d="M6 8l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" />

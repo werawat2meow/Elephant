@@ -1,41 +1,90 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
+import SignatureCanvas from "react-signature-canvas";
+import SignaturePad from "signature_pad";
 
 /* ---------------- Types ---------------- */
-type LeaveStatus = "pending" | "approved" | "rejected";
+type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
 type LeaveRequest = {
-  id: string;
-  empNo: string;
-  name: string;
-  org: string;
-  dept: string;
-  division: string;
-  unit: string;
-  leaveType: string;
-  reason: string;
-  from: string; // YYYY-MM-DD
-  to: string;   // YYYY-MM-DD
-  levelP: string;
+  id: number;
+  userId: number;
+  kind: string;
+  startDate: string;
+  endDate: string;
+  reason?: string;
   status: LeaveStatus;
+  approverReason?: string;
+  approverSignature?: string;
+  createdAt: string;
+  user: {
+    name?: string;
+    employee?: {
+      empNo: string;
+      firstName: string;
+      lastName: string;
+      org?: string;
+      department?: string;
+      division?: string;
+      unit?: string;
+      levelP?: string;
+    };
+  };
 };
 
-/* ---------------- Seed & constants ---------------- */
-const LS_KEY = "approvals-requests:v1";
-const seed: LeaveRequest[] = [
-  { id: "L001", empNo: "EMP001", name: "สมชาย ใจดี", org: "สำนักงานใหญ่", dept: "พัฒนาระบบ", division: "เทคโนโลยี", unit: "ทีม A", leaveType: "ลาพักร้อน", reason: "ท่องเที่ยวประจำปี", from: "2025-10-15", to: "2025-10-18", levelP: "P4", status: "pending" },
-  { id: "L002", empNo: "EMP002", name: "สุนีย์ สายบุญ", org: "โรงงาน 1", dept: "บุคคล", division: "สนับสนุน", unit: "ทีม HR", leaveType: "ลากิจ", reason: "ธุระครอบครัว", from: "2025-10-20", to: "2025-10-20", levelP: "P3", status: "pending" },
-  { id: "L003", empNo: "EMP003", name: "อาทิตย์ อรุณรุ่ง", org: "สำนักงานใหญ่", dept: "เทคนิค", division: "บริการ", unit: "หน่วยเทคนิค", leaveType: "ลาป่วย", reason: "พบแพทย์ตามนัด", from: "2025-10-11", to: "2025-10-12", levelP: "P6", status: "pending" },
-];
+/* ---------------- API Functions ---------------- */
+async function fetchLeaveRequests(): Promise<LeaveRequest[]> {
+  try {
+    const response = await fetch('/api/approvals');
+    if (!response.ok) throw new Error('Failed to fetch leaves');
+    const data = await response.json();
+    
+    // 🔍 Debug log
+    console.log('🔄 [Approvals] API Response:', data);
+    console.log('🔄 [Approvals] Is Array?', Array.isArray(data));
+    console.log('🔄 [Approvals] data.data?', data.data);
+    
+    const result = Array.isArray(data) ? data : data.data || [];
+    console.log('🔄 [Approvals] Final result:', result);
+    console.log('🔄 [Approvals] Result length:', result.length);
+    
+    return result;
+  } catch (error) {
+    console.error('Error fetching leave requests:', error);
+    return [];
+  }
+}
+
+async function updateLeaveStatus(id: number, status: LeaveStatus, approverReason?: string, approverSignature?: string) {
+  try {
+    const response = await fetch(`/api/leaves/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, approverReason, approverSignature })
+    });
+    if (!response.ok) throw new Error('Failed to update leave status');
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating leave status:', error);
+    throw error;
+  }
+}
 
 /* ---------------- Page ---------------- */
 export default function ApprovalsPage() {
-  const [hydrated, setHydrated] = useState(false);
-  const [data, setData] = useState<LeaveRequest[]>(seed);
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<LeaveRequest[]>([]);
 
   // selection
-  const [selectedId, setSelectedId] = useState<string | null>(null); // สำหรับ panel ด้านล่าง
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set()); // สำหรับ bulk
+  const [selectedId, setSelectedId] = useState<number | null>(null); // สำหรับ panel ด้านล่าง
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set()); // สำหรับ bulk
+
+  // approver inputs
+  const [approverReason, setApproverReason] = useState("");
+  const [approverSignature, setApproverSignature] = useState<string | null>(null);
+  const sigCanvasRef = useRef<SignatureCanvas | null>(null);
+  const signaturePadRef = useRef<HTMLCanvasElement | null>(null);
+  const signaturePadInstance = useRef<SignaturePad | null>(null);
 
   // filters
   const [q, setQ] = useState("");
@@ -47,34 +96,88 @@ export default function ApprovalsPage() {
   // toast
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
-  // load + autosave
+  // load data from API
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(LS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as LeaveRequest[];
-        if (Array.isArray(parsed) && parsed.length) setData(parsed);
-      }
-    } catch {}
-    setHydrated(true);
+    const loadData = async () => {
+      setLoading(true);
+      const leaves = await fetchLeaveRequests();
+      setData(leaves);
+      setLoading(false);
+    };
+    loadData();
   }, []);
+
+  // initialize signature pad when modal opens
   useEffect(() => {
-    if (!hydrated) return;
-    localStorage.setItem(LS_KEY, JSON.stringify(data));
-  }, [data, hydrated]);
+    if (selectedId && signaturePadRef.current) {
+      // Destroy existing instance
+      if (signaturePadInstance.current) {
+        signaturePadInstance.current.off();
+      }
+      
+      // Wait for modal to fully render
+      setTimeout(() => {
+        const canvas = signaturePadRef.current;
+        if (canvas) {
+          // Get actual canvas size from CSS
+          const rect = canvas.getBoundingClientRect();
+          const dpr = window.devicePixelRatio || 1;
+          
+          // Set canvas size to match display size
+          canvas.width = rect.width * dpr;
+          canvas.height = rect.height * dpr;
+          
+          // Scale canvas back down using CSS
+          canvas.style.width = rect.width + 'px';
+          canvas.style.height = rect.height + 'px';
+          
+          // Scale the drawing context so everything draws at the correct size
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.scale(dpr, dpr);
+          }
+          
+          // Initialize signature pad
+          signaturePadInstance.current = new SignaturePad(canvas, {
+            backgroundColor: 'rgb(255, 255, 255)',
+            penColor: 'rgb(0, 0, 0)',
+            minWidth: 1,
+            maxWidth: 3,
+          });
+          
+          console.log('SignaturePad initialized with proper scaling');
+        }
+      }, 100);
+    }
+  }, [selectedId]);
 
   // options
   const opts = useMemo(() => {
-    const uniq = <K extends keyof LeaveRequest>(k: K) =>
-      Array.from(new Set(data.map((x) => x[k]).filter(Boolean))).sort() as string[];
-    return { org: uniq("org"), dept: uniq("dept"), division: uniq("division"), unit: uniq("unit") };
+    const getUnique = (field: string) => {
+      return Array.from(new Set(
+        data.map(x => x.user.employee?.[field as keyof typeof x.user.employee])
+          .filter(Boolean)
+      )).sort() as string[];
+    };
+    return { 
+      org: getUnique("org"), 
+      dept: getUnique("department"), 
+      division: getUnique("division"), 
+      unit: getUnique("unit") 
+    };
   }, [data]);
 
   // filter result
   const filtered = useMemo(() => {
     return data.filter((r) => {
-      const hitQ = !q || [r.empNo, r.name, r.leaveType, r.reason].join(" ").toLowerCase().includes(q.toLowerCase());
-      const hit = (!fOrg || r.org === fOrg) && (!fDept || r.dept === fDept) && (!fDivision || r.division === fDivision) && (!fUnit || r.unit === fUnit);
+      const employee = r.user.employee;
+      const name = `${employee?.firstName || ''} ${employee?.lastName || ''}`.trim();
+      const empNo = employee?.empNo || '';
+      const hitQ = !q || [empNo, name, r.kind, r.reason || ''].join(" ").toLowerCase().includes(q.toLowerCase());
+      const hit = (!fOrg || employee?.org === fOrg) && 
+                  (!fDept || employee?.department === fDept) && 
+                  (!fDivision || employee?.division === fDivision) && 
+                  (!fUnit || employee?.unit === fUnit);
       return hitQ && hit;
     });
   }, [data, q, fOrg, fDept, fDivision, fUnit]);
@@ -82,7 +185,7 @@ export default function ApprovalsPage() {
   const selected = useMemo(() => data.find((d) => d.id === selectedId) || null, [data, selectedId]);
 
   // selection helpers
-  const toggleRow = (id: string) =>
+  const toggleRow = (id: number) =>
     setSelectedIds((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -99,17 +202,78 @@ export default function ApprovalsPage() {
     });
 
   // actions
-  function updateStatus(ids: string[], status: LeaveStatus) {
-    setData((prev) => prev.map((r) => (ids.includes(r.id) ? { ...r, status } : r)));
-    setToast({
-      type: status === "approved" ? "success" : "error",
-      msg: `${status === "approved" ? "อนุมัติ" : "ไม่อนุมัติ"}แล้ว ${ids.length} รายการ`,
-    });
-    setSelectedIds(new Set()); // clear selection
-    setTimeout(() => setToast(null), 2000);
+  async function updateStatus(ids: number[], status: LeaveStatus) {
+    try {
+      // อัปเดตแต่ละรายการใน API
+      await Promise.all(
+        ids.map(id => updateLeaveStatus(id, status, approverReason || undefined, approverSignature || undefined))
+      );
+      
+      // อัปเดต local state
+      setData((prev) => prev.map((r) => {
+        if (ids.includes(r.id)) {
+          return { 
+            ...r, 
+            status,
+            approverReason: approverReason || undefined,
+            approverSignature: approverSignature || undefined
+          };
+        }
+        return r;
+      }));
+      
+      setToast({
+        type: status === "APPROVED" ? "success" : "error",
+        msg: `${status === "APPROVED" ? "อนุมัติ" : "ไม่อนุมัติ"}แล้ว ${ids.length} รายการ`,
+      });
+      
+      setSelectedIds(new Set()); // clear selection
+      setApproverReason(""); // clear approver reason
+      setApproverSignature(null); // clear signature
+      sigCanvasRef.current?.clear();
+      setTimeout(() => setToast(null), 2000);
+    } catch (error) {
+      console.error('Error updating status:', error);
+      setToast({
+        type: "error",
+        msg: "เกิดข้อผิดพลาดในการอัปเดตสถานะ",
+      });
+      setTimeout(() => setToast(null), 2000);
+    }
   }
-  const approveIds = (ids: string[]) => updateStatus(ids, "approved");
-  const rejectIds = (ids: string[]) => updateStatus(ids, "rejected");
+  const approveIds = (ids: number[]) => updateStatus(ids, "APPROVED");
+  const rejectIds = (ids: number[]) => updateStatus(ids, "REJECTED");
+
+  const clearSignature = () => {
+    if (signaturePadInstance.current) {
+      signaturePadInstance.current.clear();
+    }
+    // fallback for react-signature-canvas
+    sigCanvasRef.current?.clear();
+    setApproverSignature(null);
+  };
+
+  const saveSignature = () => {
+    if (signaturePadInstance.current && !signaturePadInstance.current.isEmpty()) {
+      try {
+        const dataURL = signaturePadInstance.current.toDataURL("image/png");
+        setApproverSignature(dataURL);
+      } catch (error) {
+        console.error('Error saving signature:', error);
+      }
+    } else {
+      // fallback for react-signature-canvas
+      if (sigCanvasRef.current) {
+        try {
+          const canvas = sigCanvasRef.current.getCanvas();
+          const dataURL = canvas.toDataURL("image/png");
+          setApproverSignature(dataURL);
+        } catch (error) {
+          console.error('Fallback signature save failed:', error);
+        }
+      }
+    }
+  };
 
   return (
     <section className="neon-card rounded-2xl p-6 text-slate-900 dark:text-slate-100">
@@ -187,7 +351,13 @@ export default function ApprovalsPage() {
             </tr>
           </thead>
           <tbody className="text-slate-800 dark:text-slate-100">
-            {filtered.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan={8} className="px-4 py-6 text-center text-slate-500 dark:text-slate-400">
+                  กำลังโหลดข้อมูล...
+                </td>
+              </tr>
+            ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-4 py-6 text-center text-slate-500 dark:text-slate-400">
                   ไม่พบรายการ
@@ -196,6 +366,11 @@ export default function ApprovalsPage() {
             ) : (
               filtered.map((r, i) => {
                 const checked = selectedIds.has(r.id);
+                const employee = r.user.employee;
+                const name = `${employee?.firstName || ''} ${employee?.lastName || ''}`.trim();
+                const empNo = employee?.empNo || '-';
+                const org = `${employee?.org || '-'}/${employee?.department || '-'}/${employee?.division || '-'}/${employee?.unit || '-'}`;
+                
                 return (
                   <tr
                     key={r.id}
@@ -208,24 +383,24 @@ export default function ApprovalsPage() {
                     <Td onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
-                        aria-label={`เลือก ${r.name}`}
+                        aria-label={`เลือก ${name}`}
                         checked={checked}
                         onChange={() => toggleRow(r.id)}
                       />
                     </Td>
                     <Td className="text-center">{i + 1}</Td>
                     <Td>
-                      <div className="font-medium text-slate-900 dark:text-slate-100 text-left">{r.name}</div>
+                      <div className="font-medium text-slate-900 dark:text-slate-100 text-left">{name}</div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 text-left">
-                        {r.empNo} • {r.org}/{r.dept}/{r.division}/{r.unit}
+                        {empNo} • {org}
                       </div>
                     </Td>
-                    <Td className="hidden md:table-cell text-center">{r.leaveType}</Td>
-                    <Td className="hidden lg:table-cell text-left">
-                      {fmtDate(r.from)} – {fmtDate(r.to)}
+                    <Td className="hidden md:table-cell text-center">{r.kind}</Td>
+                    <Td className="hidden lg:table-cell text-center">
+                      {fmtDate(r.startDate)} – {fmtDate(r.endDate)}
                       <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">{r.reason}</div>
                     </Td>
-                    <Td className="hidden sm:table-cell text-center">{r.levelP}</Td>
+                    <Td className="hidden sm:table-cell text-center">{employee?.levelP || '-'}</Td>
                     <Td className="hidden sm:table-cell text-center">
                       <StatusBadge status={r.status} />
                     </Td>
@@ -261,15 +436,26 @@ export default function ApprovalsPage() {
         {selected ? (
           <div className="grid gap-4">
             <div className="grid gap-3 sm:grid-cols-3">
-              <ReadField label="ชื่อ - สกุล (ผู้ขอ)" value={`${selected.name} • ${selected.empNo}`} />
-              <ReadField
-                label="องค์กร / แผนก / ฝ่าย / หน่วย"
-                value={`${selected.org} / ${selected.dept} / ${selected.division} / ${selected.unit}`}
-              />
-              <ReadField label="Level P" value={selected.levelP} />
-              <ReadField label="ประเภทลา" value={selected.leaveType} />
-              <ReadField label="วันที่ลา" value={`${fmtDate(selected.from)} - ${fmtDate(selected.to)}`} />
-              <ReadField label="สถานะ" value={<StatusBadge status={selected.status} />} />
+              {(() => {
+                const employee = selected.user.employee;
+                const name = `${employee?.firstName || ''} ${employee?.lastName || ''}`.trim();
+                const empNo = employee?.empNo || '-';
+                const org = `${employee?.org || '-'} / ${employee?.department || '-'} / ${employee?.division || '-'} / ${employee?.unit || '-'}`;
+                
+                return (
+                  <>
+                    <ReadField label="ชื่อ - สกุล (ผู้ขอ)" value={`${name} • ${empNo}`} />
+                    <ReadField
+                      label="องค์กร / แผนก / ฝ่าย / หน่วย"
+                      value={org}
+                    />
+                    <ReadField label="Level P" value={employee?.levelP || '-'} />
+                    <ReadField label="ประเภทลา" value={selected.kind} />
+                    <ReadField label="วันที่ลา" value={`${fmtDate(selected.startDate)} - ${fmtDate(selected.endDate)}`} />
+                    <ReadField label="สถานะ" value={<StatusBadge status={selected.status} />} />
+                  </>
+                );
+              })()}
             </div>
             <div>
               <div className="mb-1 text-sm text-slate-700 dark:text-slate-300">รายละเอียด (เหตุผลการลา)</div>
@@ -277,6 +463,71 @@ export default function ApprovalsPage() {
                 {selected.reason || "-"}
               </div>
             </div>
+
+            {/* แสดงข้อมูลผู้อนุมัติ (ถ้ามี) */}
+            {selected.status !== "PENDING" && (
+              <div className="border-t pt-4 border-slate-200 dark:border-slate-700">
+                <h4 className="text-sm font-semibold mb-2 text-slate-700 dark:text-slate-300">ข้อมูลการอนุมัติ</h4>
+                <div className="grid gap-2">
+                  {selected.approverReason && (
+                    <ReadField label="เหตุผลจากผู้อนุมัติ" value={selected.approverReason} />
+                  )}
+                  {selected.approverSignature && (
+                    <div>
+                      <div className="mb-1 text-sm text-slate-700 dark:text-slate-300">ลายเซ็นผู้อนุมัติ</div>
+                      <div className="rounded-xl border p-2 border-slate-300 bg-white dark:border-white/10 dark:bg-slate-800/80">
+                        <img src={selected.approverSignature} alt="ลายเซ็นผู้อนุมัติ" className="max-h-20" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* เหตุผลของผู้อนุมัติ */}
+            <div>
+              <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">เหตุผลในการอนุมัติ/ไม่อนุมัติ</label>
+              <textarea
+                value={approverReason}
+                onChange={(e) => setApproverReason(e.target.value)}
+                className="w-full rounded-xl border p-3 h-24 border-slate-300 bg-white text-slate-900 placeholder-slate-400
+                           focus:border-slate-400 focus:ring-2 focus:ring-slate-300/60
+                           dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100
+                           dark:placeholder-slate-500 dark:focus:border-slate-500 dark:focus:ring-slate-700/40"
+                placeholder="ระบุเหตุผลในการอนุมัติหรือไม่อนุมัติ"
+              />
+            </div>
+
+            {/* Signature Canvas */}
+            <div>
+              <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">ลายเซ็น</label>
+              <div className="border rounded-xl p-3 border-slate-300 bg-white dark:border-white/10 dark:bg-slate-800/80">
+                <canvas
+                  ref={signaturePadRef}
+                  className="w-full h-40 border rounded bg-white border-slate-300"
+                />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={clearSignature}
+                    className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600"
+                  >
+                    ล้างลายเซ็น
+                  </button>
+                  <button
+                    onClick={saveSignature}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    บันทึกลายเซ็น
+                  </button>
+                  {approverSignature && (
+                    <span className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center">
+                      ✓ บันทึกลายเซ็นแล้ว
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="mt-2 flex justify-end gap-2">
               <button
                 className="rounded-xl px-4 py-2 bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600"
@@ -345,18 +596,26 @@ function ReadField({ label, value }: { label: string; value: React.ReactNode }) 
   );
 }
 function StatusBadge({ status }: { status: LeaveStatus }) {
-  const map: Record<LeaveStatus, string> = {
-    pending:  "bg-amber-200 text-amber-900 border-amber-300 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/40",
-    approved: "bg-emerald-200 text-emerald-900 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700/40",
-    rejected: "bg-rose-200 text-rose-900 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700/40",
+  const map: Record<string, string> = {
+    "PENDING":  "bg-yellow-200 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700/40",
+    "APPROVED": "bg-green-200 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/40", 
+    "REJECTED": "bg-red-200 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/40",
   };
-  const label = status === "pending" ? "รออนุมัติ" : status === "approved" ? "อนุมัติแล้ว" : "ไม่อนุมัติ";
-  return <span className={`inline-block rounded-full border px-2 py-0.5 text-xs ${map[status]}`}>{label}</span>;
+  const label = status === "PENDING" ? "รออนุมัติ" : status === "APPROVED" ? "อนุมัติแล้ว" : "ไม่อนุมัติ";
+  const className = map[status] || map["PENDING"];
+  return <span className={`inline-block rounded-full border px-2 py-0.5 text-xs ${className}`}>{label}</span>;
 }
 
 /* ---------------- Utils ---------------- */
 function fmtDate(s: string) {
   if (!s) return "-";
-  const [y, m, d] = s.split("-");
-  return `${d}/${m}/${y}`;
+  // แปลง ISO string เป็น Date แล้วฟอร์แมต
+  const date = new Date(s);
+  if (isNaN(date.getTime())) return "-";
+  
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  
+  return `${day}/${month}/${year}`;
 }

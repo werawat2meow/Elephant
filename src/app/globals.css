@@ -20,6 +20,49 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Responsive text utilities for better language support */
+.responsive-text {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.text-responsive-sm {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+@media (min-width: 640px) {
+  .text-responsive-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+
+.text-responsive-base {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .text-responsive-base {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+}
+
+.text-responsive-lg {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .text-responsive-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+}
+
 :root {
   --bg:#0e0f12;
   --panel:#17181d;
@@ -204,6 +247,57 @@ html.theme-light .history-table td{
 html.theme-light .history-table thead th{
   background:#eef2f7;
   border-bottom:1px solid var(--border);
+}
+
+/* Google Translate Widget Improvements */
+#google_translate_element {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#google_translate_element .goog-te-combo {
+  background: var(--input) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0.5rem !important;
+  color: var(--text) !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.875rem !important;
+  max-width: 120px !important;
+}
+
+#google_translate_element .goog-te-combo option {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+}
+
+/* Hide Google Translate attribution */
+.goog-te-banner-frame {
+  display: none !important;
+}
+
+.skiptranslate {
+  display: none !important;
+}
+
+/* Responsive text overflow handling */
+.neon-title {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+}
+
+/* Responsive button text */
+@media (max-width: 640px) {
+  .btn-primary {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .neon-title {
+    font-size: 1rem !important;
+    line-height: 1.25rem !important;
+  }
 }
 html.theme-light .history-table tbody tr{
   border-top:1px solid var(--border);

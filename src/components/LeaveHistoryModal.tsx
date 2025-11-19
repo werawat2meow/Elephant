@@ -21,6 +21,14 @@ export default function LeaveHistoryModal({
   onClose: () => void;
   items: LeaveHistoryItem[];
 }) {
+  // Debug logging
+  useEffect(() => {
+    if (open) {
+      console.log("📋 LeaveHistoryModal opened with items:", items);
+      console.log("📋 Items length:", items.length);
+    }
+  }, [open, items]);
+
   // ปิดด้วย ESC
   useEffect(() => {
     if (!open) return;
@@ -54,68 +62,55 @@ export default function LeaveHistoryModal({
           </button>
         </div>
 
-        <div className="overflow-auto rounded-xl border border-white/10">
-          <table className="w-full history-table">
-            <colgroup>
-              <col className="col-num" />
-              <col />
-              <col />
-              <col />
-              <col />
-              <col className="col-status" />
-            </colgroup>
+        {items.length === 0 ? (
+          <div className="text-center py-12 text-[var(--muted)]">
+            <div className="text-4xl mb-4">📋</div>
+            <p className="text-lg mb-2">ยังไม่มีประวัติการลา</p>
+            <p className="text-sm">เมื่อคุณแจ้งลาแล้ว ประวัติจะแสดงที่นี่</p>
+          </div>
+        ) : (
+          <div className="overflow-auto rounded-xl border border-white/10">
+            <table className="w-full history-table">
+              <colgroup>
+                <col className="col-num" />
+                <col />
+                <col />
+                <col />
+                <col />
+                <col className="col-status" />
+              </colgroup>
 
-            <thead>
-              <tr>
-                <th className="text-center">number</th>
-                <th className="text-center">Types of leave</th>
-                <th className="text-center">Leave from date - to date</th>
-                <th className="text-center">Approver comments</th>
-                <th className="text-center">Approver</th>
-                <th className="text-center">Approval results</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {items.map((r) => (
-                <tr key={r.no}>
-                  <td className="col-num text-center">{r.no}</td>
-                  <td className="text-center">{r.type}</td>
-                  <td className="tabular-nums text-center">{r.range}</td>
-                  <td className="text-center">{r.approverComment}</td>
-                  <td className="text-center">{r.approver}</td>
-                  <td className="col-status text-center">
-                    {r.status === "approved" ? (
-                      <span
-                        className="inline-block rounded-lg px-2 py-1 text-xs font-semibold ring-1
-                               bg-[rgba(0,255,120,.15)] text-[rgb(0,255,120)] ring-[rgba(0,255,120,.35)]"
-                      >
-                        approve
-                      </span>
-                    ) : r.status === "rejected" ? (
-                      <span
-                        className="inline-block rounded-lg px-2 py-1 text-xs font-semibold ring-1
-                               bg-[rgba(255,60,60,.15)] text-[rgb(255,80,80)] ring-[rgba(255,60,60,.35)]"
-                      >
-                        Not approved
-                      </span>
-                    ) : (
-                      <span
-                        className="inline-block rounded-lg px-2 py-1 text-xs font-semibold ring-1
-                               bg-[rgba(255,200,0,.15)] text-[rgb(255,200,0)] ring-[rgba(255,200,0,.35)]"
-                      >
-                        Pending
-                      </span>
-                    )}
-                  </td>
+              <thead>
+                <tr>
+                  <th className="px-3 py-2 text-center text-sm font-semibold bg-white/5">ลำดับ</th>
+                  <th className="px-3 py-2 text-center text-sm font-semibold bg-white/5">ประเภทการลา</th>
+                  <th className="px-3 py-2 text-center text-sm font-semibold bg-white/5">ช่วงวันที่ลา</th>
+                  <th className="px-3 py-2 text-center text-sm font-semibold bg-white/5">ความเห็นผู้อนุมัติ</th>
+                  <th className="px-3 py-2 text-center text-sm font-semibold bg-white/5">ผู้อนุมัติ</th>
+                  <th className="px-3 py-2 text-center text-sm font-semibold bg-white/5">ผลการอนุมัติ</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+
+              <tbody>
+                {items.map((r) => (
+                  <tr key={r.no} className="odd:bg-white/0 even:bg-white/5">
+                    <td className="px-3 py-2 text-center">{r.no}</td>
+                    <td className="px-3 py-2 text-center">{r.type || '-'}</td>
+                    <td className="px-3 py-2 text-center tabular-nums">{r.range || '-'}</td>
+                    <td className="px-3 py-2 text-center">{r.approverComment || '-'}</td>
+                    <td className="px-3 py-2 text-center">{r.approver || '-'}</td>
+                    <td className="px-3 py-2 text-center">
+                      <StatusPill status={r.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         <div className="mt-3 text-xs text-[var(--muted)]">
-          * ข้อมูลเป็นตัวอย่าง สามารถเชื่อมต่อฐานข้อมูลจริงภายหลัง
+          * ข้อมูลดึงจากฐานข้อมูลจริง • รวม {items.length} รายการ
         </div>
       </div>
     </div>
@@ -127,22 +122,25 @@ function StatusPill({
 }: {
   status: "approved" | "rejected" | "pending";
 }) {
-  const label =
-    status === "approved"
-      ? "อนุมัติ"
-      : status === "rejected"
-      ? "ไม่อนุมัติ"
-      : "รออนุมัติ";
-  const cls =
-    status === "approved"
-      ? "bg-[rgba(0,255,120,.15)] text-[rgb(0,255,120)] ring-[rgba(0,255,120,.35)]"
-      : status === "rejected"
-      ? "bg-[rgba(255,60,60,.15)] text-[rgb(255,80,80)] ring-[rgba(255,60,60,.35)]"
-      : "bg-[rgba(255,200,0,.15)] text-[rgb(255,200,0)] ring-[rgba(255,200,0,.35)]";
+  const config = {
+    approved: {
+      label: "อนุมัติ",
+      className: "bg-emerald-500/20 text-emerald-400 ring-emerald-500/30"
+    },
+    rejected: {
+      label: "ไม่อนุมัติ", 
+      className: "bg-red-500/20 text-red-400 ring-red-500/30"
+    },
+    pending: {
+      label: "รออนุมัติ",
+      className: "bg-amber-500/20 text-amber-400 ring-amber-500/30"
+    }
+  };
+
+  const { label, className } = config[status];
+  
   return (
-    <span
-      className={`inline-block rounded-lg px-2 py-1 text-xs font-semibold ring-1 ${cls}`}
-    >
+    <span className={`inline-block rounded-lg px-2 py-1 text-xs font-semibold ring-1 ${className}`}>
       {label}
     </span>
   );

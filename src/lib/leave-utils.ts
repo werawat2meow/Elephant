@@ -24,12 +24,13 @@ export function countBusinessDays(from: Date, to: Date, session: HalfSession, ho
   let days = 0;
   for (let dt = new Date(from); dt <= to; dt.setDate(dt.getDate() + 1)) {
     const d = new Date(dt);
-    if (isWeekend(d) || isHoliday(d, holidays)) continue;
+    // สำหรับบริษัททัวร์: ทำงานทุกวัน ยกเว้นวันหยุดที่กำหนดใน Holiday table เท่านั้น
+    if (isHoliday(d, holidays)) continue;
     days += 1;
   }
   if (session !== "FULL") {
     const same = ymd(from) === ymd(to);
-    const working = !(isWeekend(from) || isHoliday(from, holidays));
+    const working = !isHoliday(from, holidays);
     if (same && working) days = 0.5;
     else if (working) days = Math.max(0, days - 0.5);
   }

@@ -9,7 +9,7 @@ import LeaveHistoryModal, {
 type LeaveKind =
   | "ANNUAL" | "SICK" | "BUSINESS" | "UNPAID"
   | "BIRTHDAY" | "ORDAIN" | "MATERNITY"
-  | "SHIFT_CHANGE" | "HOLIDAY_CHANGE" | "OT";
+  | "SHIFT_CHANGE" | "HOLIDAY_CHANGE" | "OT" | "ANNUAL_HOLIDAY";
 
 // รายการปุ่มที่จะแสดงใน UI
 const LEAVE_TYPES: Array<{ label: string; kind: LeaveKind }> = [
@@ -20,9 +20,11 @@ const LEAVE_TYPES: Array<{ label: string; kind: LeaveKind }> = [
   { label: "Birthday Leave",      kind: "BIRTHDAY" },
   { label: "Monkhood Leave",      kind: "ORDAIN" },
   { label: "Maternity Leave",     kind: "MATERNITY" },
-  { label: "Shift Change",        kind: "SHIFT_CHANGE" },
-  { label: "Holiday Change",      kind: "HOLIDAY_CHANGE" },
-  { label: "OT",                  kind: "OT" },
+  { label: "Annual Holiday Leave", kind: "ANNUAL_HOLIDAY" }, // ลาโดยใช้วันหยุดประจำปี
+  // ซ่อนไว้ก่อน - ยังไม่มีการใช้งาน
+  // { label: "Shift Change",        kind: "SHIFT_CHANGE" },
+  // { label: "Holiday Change",      kind: "HOLIDAY_CHANGE" },
+  // { label: "OT",                  kind: "OT" },
 ];
 
 type EmployeeForm = {
@@ -104,15 +106,25 @@ export default function LeavePage() {
   const [openHistory, setOpenHistory] = useState(false);
   const [history, setHistory] = useState<LeaveHistoryItem[]>([]);
 
-  useEffect(() => {
-    if (!openHistory) return;
-    (async () => {
-      try {
-        const res = await fetch("/api/leaves", { credentials: "include" });
-        const json = await res.json();
-        if (Array.isArray(json.data)) {
-          setHistory(
-            json.data.map((l: any, idx: number) => ({
+useEffect(() => {
+  if (!openHistory) return;
+  (async () => {
+    try {
+      console.log("🔄 Fetching leave history..."); // เพิ่ม debug
+      
+      const res = await fetch("/api/leaves", { credentials: "include" });
+      const json = await res.json();
+      
+      console.log("📋 API Response:", json); // เพิ่ม debug
+      console.log("📋 Is array?", Array.isArray(json.data)); // เพิ่ม debug
+      
+      if (Array.isArray(json.data)) {
+        console.log("📋 Raw data:", json.data); // เพิ่ม debug
+        
+        setHistory(
+          json.data.map((l: any, idx: number) => {
+            console.log(`📋 Item ${idx}:`, l); // เพิ่ม debug
+            return {
               no: idx + 1,
               type: l.kind,
               range: `${new Date(l.startDate).toLocaleDateString()} - ${new Date(l.endDate).toLocaleDateString()}`,
@@ -126,14 +138,18 @@ export default function LeavePage() {
                   : l.status === "REJECTED"
                   ? "rejected"
                   : "pending",
-            }))
-          );
-        }
-      } catch (e) {
-        setHistory([]);
+            };
+          })
+        );
+      } else {
+        console.log("❌ API response is not array format"); // เพิ่ม debug
       }
-    })();
-  }, [openHistory]);
+    } catch (e) {
+      console.error("❌ Error fetching leave history:", e); // เพิ่ม debug
+      setHistory([]);
+    }
+  })();
+}, [openHistory]);
 
   const [emp, setEmp] = useState<EmployeeForm>({
     Nametitle: "นาย",
@@ -201,6 +217,7 @@ async function onSubmit(e: React.FormEvent) {
       contact: leave.contact ?? "",
       handoverTo: leave.handoverTo ?? "",
       attachmentUrl,
+      approverId: leave.approverId,
     };
 
     const res = await fetch("/api/leaves", {
@@ -439,16 +456,16 @@ useEffect(() => {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 py-6 grid gap-6 lg:grid-cols-3">
+      <div className="mx-auto max-w-6xl px-2 sm:px-4 py-6 grid gap-4 sm:gap-6 lg:grid-cols-3">
         {/* ฝั่งซ้าย: ข้อมูลพนักงาน + ประเภทการลา + ช่วงวัน */}
-        <section className="lg:col-span-2 space-y-6">
+        <section className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* ข้อมูลพนักงาน */}
-          <div className="neon-card rounded-2xl p-5">
+          <div className="neon-card rounded-2xl p-3 sm:p-5">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="neon-title text-lg font-semibold">ข้อมูลพนักงาน</h2>
+              <h2 className="neon-title text-base sm:text-lg font-semibold break-words">ข้อมูลพนักงาน</h2>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2">
               <Input label="รหัสพนักงาน (EMP No.)" value={emp.empNo ?? ""} readOnly />
               <Input
                 label="วันที่ยื่น (Auto)"
@@ -483,11 +500,11 @@ useEffect(() => {
           </div>
 
           {/* ประเภทการลา */}
-          <div className="neon-card rounded-2xl p-5">
-            <h2 className="neon-title mb-3 text-lg font-semibold">
+          <div className="neon-card rounded-2xl p-3 sm:p-5">
+            <h2 className="neon-title mb-3 text-base sm:text-lg font-semibold break-words leading-tight">
               ประเภทการลา
             </h2>
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2">
               {LEAVE_TYPES.map((t) => (
                 <label key={t.kind}
                   className={`rounded-xl border border-white/10 p-3 cursor-pointer transition ${
@@ -509,13 +526,13 @@ useEffect(() => {
           {/* ช่วงวัน/เหตุผล/แนบไฟล์ */}
           <form
             onSubmit={onSubmit}
-            className="neon-card rounded-2xl p-5 space-y-4"
+            className="neon-card rounded-2xl p-3 sm:p-5 space-y-3 sm:space-y-4"
           >
-            <h2 className="neon-title mb-1 text-lg font-semibold">
+            <h2 className="neon-title mb-1 text-base sm:text-lg font-semibold break-words leading-tight">
               รายละเอียดการลา
             </h2>
 
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2">
               <Input
                 required
                 label="ตั้งแต่วันที่"
@@ -532,11 +549,11 @@ useEffect(() => {
               />
             </div>
 
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-3">
               {["Full Day", "Morning (Half)", "Afternoon (Half)"].map((s) => (
                 <label
                   key={s}
-                  className={`rounded-xl border border-white/10 p-3 cursor-pointer ${
+                  className={`rounded-xl border border-white/10 p-2 sm:p-3 cursor-pointer text-sm sm:text-base ${
                     leave.session === s
                       ? "bg-[var(--input)] ring-2 ring-[var(--cyan)]"
                       : "hover:bg-white/5"
@@ -556,7 +573,7 @@ useEffect(() => {
               ))}
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-1 block text-sm">ผู้อนุมัติ</span>
 
@@ -645,18 +662,18 @@ useEffect(() => {
               </label>
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="rounded-xl px-4 py-2 border border-white/10 hover:bg-white/5"
+                className="rounded-xl px-4 py-2 border border-white/10 hover:bg-white/5 text-sm sm:text-base order-2 sm:order-1"
               >
                 ยกเลิก
               </button>
               <button
                   type="submit"
-                  disabled={submitting || !leave.leaveType}   // 👈 เพิ่มเงื่อนไขนี้
-                  className="rounded-xl px-5 py-2 font-semibold bg-[var(--cyan)] text-[#001418] shadow-[0_10px_28px_var(--cyan-soft)] disabled:opacity-50"
+                  disabled={submitting || !leave.leaveType}
+                  className="rounded-xl px-4 sm:px-5 py-2 font-semibold bg-[var(--cyan)] text-[#001418] shadow-[0_10px_28px_var(--cyan-soft)] disabled:opacity-50 text-sm sm:text-base order-1 sm:order-2 whitespace-nowrap"
                 >
                   {submitting ? "กำลังส่ง..." : "ส่งคำขอลา"}
                 </button>
@@ -665,7 +682,7 @@ useEffect(() => {
         </section>
 
         {/* ฝั่งขวา: สิทธิวันลา + วันหยุดประจำปี */}
-        <aside className="space-y-6">
+        <aside className="space-y-4 sm:space-y-6">
           <div className="neon-card rounded-2xl p-5">
             <h2 className="neon-title mb-3 text-lg font-semibold">สิทธิวันลา (ทุกระดับ)</h2>
             {loadingAllRights ? (
@@ -722,8 +739,8 @@ useEffect(() => {
               </div>
             )}
 
-          <div className="neon-card rounded-2xl p-5">
-            <h2 className="neon-title mb-3 text-lg font-semibold">
+          <div className="neon-card rounded-2xl p-3 sm:p-5">
+            <h2 className="neon-title mb-3 text-sm sm:text-lg font-semibold break-words hyphens-auto leading-tight">
               วันหยุดประจำปี (Public Holidays)
             </h2>
 
@@ -856,15 +873,14 @@ function Input({
       const pct   = total > 0 ? Math.min(100, Math.round((used / total) * 100)) : 0;
 
       return (
-        <div className="rounded-xl border border-white/10 p-3">
-          <div className="mb-1 text-sm opacity-80">{title}</div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold">{left}</span>
-            {/* <span className="text-xs text-[var(--muted)]">เหลือ / ทั้งหมด {total}</span> */}
+        <div className="rounded-xl border border-white/10 p-2 sm:p-3">
+          <div className="mb-1 text-xs sm:text-sm opacity-80 truncate" title={title}>{title}</div>
+          <div className="flex items-baseline gap-1 sm:gap-2">
+            <span className="text-lg sm:text-2xl font-bold">{left}</span>
           </div>
-          <div className="mt-2 h-2 w-full rounded bg-white/10">
+          <div className="mt-2 h-1.5 sm:h-2 w-full rounded bg-white/10">
             <div
-              className="h-2 rounded bg-[var(--cyan)]"
+              className="h-1.5 sm:h-2 rounded bg-[var(--cyan)]"
               style={{ width: `${pct}%` }}
               aria-label={`${pct}% used`}
             />

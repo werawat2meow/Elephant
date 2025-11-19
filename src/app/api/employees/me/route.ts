@@ -107,9 +107,10 @@ const toN = (x: any) => (typeof x === "number" && isFinite(x) ? x : 0);
 const from = new Date(Date.UTC(new Date().getUTCFullYear(), 0, 1));
 const to   = new Date(Date.UTC(new Date().getUTCFullYear() + 1, 0, 1));
 
-// ✅ สร้าง where แบบปลอดภัย
+// ✅ สร้าง where แบบปลอดภัย - หัก PENDING และ APPROVED (ไม่หัก REJECTED)
+// เมื่อแจ้งลาจะหักสิทธิ์ทันที และจะคืนเมื่อถูก REJECTED
 const whereLeave: any = {
-  status: "APPROVED",
+  status: { in: ["PENDING", "APPROVED"] },
   startDate: { gte: from, lt: to },
 };
 
@@ -150,13 +151,14 @@ const approved = await prisma.leave.findMany({
     // ใช้ l.requestedDays ถ้ามี หรือคำนวณจาก startDate/endDate
     let days = typeof l.requestedDays === "number" ? l.requestedDays : dayDiffInclusive(new Date(l.startDate), new Date(l.endDate));
     switch (l.kind) {
-      case "ANNUAL":      used.vacation    += days; break;
-      case "SICK":        used.sick        += days; break;
-      case "BUSINESS":    used.business    += days; break;
-      case "UNPAID":      used.unpaid      += days; break;
-      case "BIRTHDAY":    used.birthday    += days; break;
-      case "ORDAIN":      used.ordainDays  += days; break;
-      case "MATERNITY":   used.maternity   += days; break;
+      case "ANNUAL":        used.vacation      += days; break;
+      case "SICK":          used.sick          += days; break;
+      case "BUSINESS":      used.business      += days; break;
+      case "UNPAID":        used.unpaid        += days; break;
+      case "BIRTHDAY":      used.birthday      += days; break;
+      case "ORDAIN":        used.ordainDays    += days; break;
+      case "MATERNITY":     used.maternity     += days; break;
+      case "ANNUAL_HOLIDAY": used.annualHolidays += days; break; // ลาโดยใช้วันหยุดประจำปี
       // เพิ่มประเภทอื่น ๆ ตาม schema
     }
   }

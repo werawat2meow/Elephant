@@ -31,6 +31,7 @@ enum LeaveKind {
   BIRTHDAY        // Birthday Leave
   ORDAIN          // Monkhood/Ordain
   MATERNITY       // Maternity Leave
+  ANNUAL_HOLIDAY  // Annual Holiday Leave (ลาโดยใช้วันหยุดประจำปี)
   SHIFT_CHANGE    // Shift Change (ไม่ตัดสิทธิ์)
   HOLIDAY_CHANGE  // Holiday Change (ไม่ตัดสิทธิ์)
   OT              // OT (ไม่ตัดสิทธิ์)
@@ -53,7 +54,6 @@ model User {
   role         Role    @default(USER)
 
   leaves    Leave[] // คำขอที่ user นี้ยื่น
-  approvals Leave[]   @relation("ApproverRequests") // คำขอที่ user นี้เป็นผู้อนุมัติ
   employee  Employee?
 
   createdAt DateTime @default(now())
@@ -70,7 +70,7 @@ model Leave {
   userId Int
 
   // ผู้อนุมัติ (อาจยังว่าง)
-  approver   User? @relation("ApproverRequests", fields: [approverId], references: [id])
+  approver   Approver? @relation(fields: [approverId], references: [id])
   approverId Int?
 
   // 🔁 เปลี่ยนจาก type:String → kind:LeaveKind
@@ -81,6 +81,8 @@ model Leave {
   // ✅ เพิ่มฟิลด์ให้ครบตามฟอร์ม
   session       LeaveSession?
   reason        String?
+  approverReason    String?  // เหตุผลจากผู้อนุมัติ
+  approverSignature String?  // ลายเซ็นของผู้อนุมัติ (Base64 หรือ URL)
   contact       String?
   handoverTo    String?
   attachmentUrl String?
@@ -179,6 +181,9 @@ model Approver {
   level       String?
   lineId      String?
   email       String?  @unique   // ✅ เพิ่มเพื่อผูกกับตาราง User
+
+  // ✅ เพิ่ม relation สำหรับ Leave records ที่อนุมัติ
+  approvedLeaves Leave[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
