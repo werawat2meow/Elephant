@@ -93,6 +93,11 @@ model Leave {
   status     LeaveStatus @default(PENDING)
   approvedAt DateTime?
 
+    // HR Confirmation (ยืนยันจาก HR หลัง manager อนุมัติ)
+  hrConfirmed   Boolean   @default(false)
+  hrConfirmedAt DateTime?
+  hrConfirmedBy String?   // email ของ HR ที่ยืนยัน
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -100,6 +105,7 @@ model Leave {
   @@index([approverId])
   @@index([status, createdAt])
   @@index([kind, startDate, endDate]) // ช่วย query รายปี/ตามประเภท
+  @@index([hrConfirmed])
 }
 model Employee {
   id             Int       @id @default(autoincrement())

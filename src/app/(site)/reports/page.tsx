@@ -19,14 +19,14 @@ type LeaveRequest = {
   levelP: string;
   status: LeaveStatus;
   hrConfirmed?: boolean; // HR ยืนยันแล้วหรือยัง
+  approverName?: string; // ชื่อผู้อนุมัติ
 };
-
-const LS_KEY = "approvals-requests:v1";
 
 /* ---------- Page ---------- */
 export default function HRConfirmRecheckPage() {
   const [hydrated, setHydrated] = useState(false);
   const [data, setData] = useState<LeaveRequest[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // filter
   const [fOrg, setFOrg] = useState("");
@@ -46,22 +46,45 @@ export default function HRConfirmRecheckPage() {
   const [toast, setToast] =
     useState<{ type: "success" | "error"; msg: string } | null>(null);
 
-  /* ---------- Load/Save ---------- */
-  useEffect(() => {
+  /* ---------- Load Data from API ---------- */
+  const fetchData = async () => {
+    setLoading(true);
     try {
-      const raw = localStorage.getItem(LS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as LeaveRequest[];
-        setData(parsed.map((r) => ({ hrConfirmed: false, ...r })));
+      const params = new URLSearchParams({
+        ...(fOrg && { org: fOrg }),
+        ...(fDept && { dept: fDept }),
+        ...(fDivision && { division: fDivision }),
+        ...(fUnit && { unit: fUnit }),
+        ...(dateFrom && { dateFrom }),
+        ...(dateTo && { dateTo }),
+        showConfirmed: showConfirmed.toString(),
+      });
+
+      const response = await fetch(`/api/reports?${params}`);
+      const result = await response.json();
+      
+      if (result.ok) {
+        setData(result.data);
+      } else {
+        setToast({ type: "error", msg: "ไม่สามารถโหลดข้อมูลได้" });
       }
-    } catch {}
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setToast({ type: "error", msg: "เกิดข้อผิดพลาดในการโหลดข้อมูล" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     setHydrated(true);
   }, []);
 
   useEffect(() => {
-    if (!hydrated) return;
-    localStorage.setItem(LS_KEY, JSON.stringify(data));
-  }, [data, hydrated]);
+    if (hydrated) {
+      fetchData();
+    }
+  }, [hydrated, fOrg, fDept, fDivision, fUnit, dateFrom, dateTo, showConfirmed]);
 
   /* ---------- Helpers ---------- */
   const withinRange = (from: string, to: string) => {
@@ -137,19 +160,67 @@ export default function HRConfirmRecheckPage() {
     });
 
   /* ---------- Actions ---------- */
-  function confirmHR(ids: string[]) {
+  async function confirmHR(ids: string[]) {
     if (ids.length === 0) return;
-    setData((prev) => prev.map((r) => (ids.includes(r.id) ? { ...r, hrConfirmed: true } : r)));
-    setSelectedIds(new Set());
-    setToast({ type: "success", msg: `ยืนยันแล้ว ${ids.length} รายการ` });
-    setTimeout(() => setToast(null), 2000);
+    
+    setLoading(true);
+    try {
+      const response = await fetch('/api/hr-confirm', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leaveIds: ids,
+          action: 'confirm'
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.ok) {
+        setSelectedIds(new Set());
+        setToast({ type: "success", msg: `ยืนยันแล้ว ${ids.length} รายการ` });
+        fetchData();
+      } else {
+        setToast({ type: "error", msg: "ไม่สามารถยืนยันได้" });
+      }
+    } catch (error) {
+      console.error('Error confirming:', error);
+      setToast({ type: "error", msg: "เกิดข้อผิดพลาดในการยืนยัน" });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setToast(null), 2000);
+    }
   }
-  function undoConfirm(ids: string[]) {
+  async function undoConfirm(ids: string[]) {
     if (ids.length === 0) return;
-    setData((prev) => prev.map((r) => (ids.includes(r.id) ? { ...r, hrConfirmed: false } : r)));
-    setSelectedIds(new Set());
-    setToast({ type: "success", msg: `ยกเลิกยืนยันแล้ว ${ids.length} รายการ` });
-    setTimeout(() => setToast(null), 2000);
+    
+    setLoading(true);
+    try {
+      const response = await fetch('/api/hr-confirm', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leaveIds: ids,
+          action: 'unconfirm'
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.ok) {
+        setSelectedIds(new Set());
+        setToast({ type: "success", msg: `ยกเลิกยืนยันแล้ว ${ids.length} รายการ` });
+        fetchData();
+      } else {
+        setToast({ type: "error", msg: "ไม่สามารถยกเลิกยืนยันได้" });
+      }
+    } catch (error) {
+      console.error('Error undoing confirm:', error);
+      setToast({ type: "error", msg: "เกิดข้อผิดพลาดในการยกเลิกยืนยัน" });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setToast(null), 2000);
+    }
   }
 
   return (
@@ -209,7 +280,7 @@ export default function HRConfirmRecheckPage() {
               className="rounded-lg border border-amber-300 px-3 py-1 text-sm text-amber-700 hover:bg-amber-50
                          disabled:opacity-50 dark:border-amber-500/50 dark:text-amber-300 dark:hover:bg-amber-900/30"
               onClick={() => undoConfirm(Array.from(selectedIds))}
-              disabled={selectedIds.size === 0}
+              disabled={selectedIds.size === 0 || loading}
             >
               ยกเลิกยืนยันที่เลือก
             </button>
@@ -218,13 +289,23 @@ export default function HRConfirmRecheckPage() {
               className="rounded-lg border border-emerald-300 px-3 py-1 text-sm text-emerald-700 hover:bg-emerald-50
                          disabled:opacity-50 dark:border-emerald-500/50 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
               onClick={() => confirmHR(Array.from(selectedIds))}
-              disabled={selectedIds.size === 0}
+              disabled={selectedIds.size === 0 || loading}
             >
               ยืนยันที่เลือก
             </button>
           )}
         </div>
       </div>
+
+      {/* Loading Indicator */}
+      {loading && (
+        <div className="mt-3 text-center text-slate-500">
+          <div className="inline-flex items-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="ml-2">กำลังโหลด...</div>
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="mt-3 rounded-xl border overflow-hidden
@@ -239,21 +320,23 @@ export default function HRConfirmRecheckPage() {
                   aria-label="เลือกทั้งหมด"
                   checked={allVisibleSelected}
                   onChange={toggleSelectAll}
+                  disabled={loading}
                 />
               </Th>
               <Th>ลำดับ</Th>
               <Th>ชื่อ - สกุล</Th>
+              <Th className="text-center">Level P</Th>
               <Th>ใช้สิทธิ์ลา</Th>
               <Th>รายละเอียดการลา</Th>
-              <Th className="text-center">Level P</Th>
+              <Th>ผู้อนุมัติ</Th>
               <Th className="text-right pr-3">{showConfirmed ? "ยกเลิก" : "ยืนยัน"}</Th>
             </tr>
           </thead>
 
           <tbody className="text-slate-900 dark:text-slate-100">
-            {list.length === 0 ? (
+            {!loading && list.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-slate-500 dark:text-slate-400">
+                <td colSpan={8} className="px-4 py-6 text-center text-slate-500 dark:text-slate-400">
                   {showConfirmed ? "ไม่มีรายการที่ยืนยันแล้ว" : "ไม่มีรายการรอยืนยันจาก HR"}
                 </td>
               </tr>
@@ -280,6 +363,7 @@ export default function HRConfirmRecheckPage() {
                         {r.empNo} • {r.org}/{r.dept}/{r.division}/{r.unit}
                       </div>
                     </Td>
+                    <Td className="text-center">{r.levelP}</Td>
                     <Td>{r.leaveType}</Td>
                     <Td>
                       {fmtDate(r.from)} – {fmtDate(r.to)}
@@ -287,7 +371,11 @@ export default function HRConfirmRecheckPage() {
                         {r.reason}
                       </div>
                     </Td>
-                    <Td className="text-center">{r.levelP}</Td>
+                    <Td>
+                      <div className="font-medium text-sm">
+                        {r.approverName || 'ยังไม่ระบุผู้อนุมัติ'}
+                      </div>
+                    </Td>
                     <Td className="text-right pr-3">
                       {showConfirmed ? (
                         <button
