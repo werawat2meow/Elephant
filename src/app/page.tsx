@@ -227,7 +227,7 @@ export default function Home() {
       badge: getPackageBadge(1),
       badgeColor: 'bg-yellow-500',
       price: { adult: 2700, child: 1500 },
-      image: '/images/elephants/packages/packone.jpg',
+      image: '/images/elephants/packages/packtwo.jpg',
       activities: getPackageActivities(1),
       times: ['9:00 AM', '2:00 PM']
     },

@@ -55,7 +55,7 @@ export default function PackagesPage() {
       badge: currentLang === 'th' ? 'เหมาะกับครอบครัว' : 'Suitable for Family',
       badgeColor: 'bg-yellow-500',
       price: { adult: 2700, child: 1500 },
-      image: '/api/placeholder/400/300',
+      image: '/images/elephants/packages/packone.jpg',
       activities: currentLang === 'th' 
         ? ['ป้อนอาหารช้าง', 'ถ่ายภาพกับช้าง', 'เรียนรู้พฤติกรรมช้าง', 'สาธิตการทำอาหารไทย', 'สาธิตการทำกะทิ', 'รับประทานอาหารท่ามกลางธรรมชาติ']
         : ['Feeding elephants', 'Taking photos with elephants', 'Learning elephant behaviors', 'Thai cooking demonstration', 'Coconut milk demonstration', 'Lunch/dinner in nature'],
@@ -70,7 +70,7 @@ export default function PackagesPage() {
       badge: currentLang === 'th' ? 'ได้รับความนิยมสูงสุด' : 'Most Enjoyable',
       badgeColor: 'bg-green-500',
       price: { adult: 1600, child: 1000 },
-      image: '/api/placeholder/400/300',
+      image: '/images/elephants/packages/packtwo.jpg',
       activities: currentLang === 'th'
         ? ['ป้อนอาหารช้าง', 'ถ่ายภาพกับช้าง', 'เรียนรู้พฤติกรรมช้าง', 'เตรียมอาหารช้าง (ผลไม้ผสมข้าว)']
         : ['Feeding elephants', 'Taking photos with elephants', 'Learning elephant behaviors', 'Prepare elephant meal (fruit with rice)'],
@@ -85,7 +85,7 @@ export default function PackagesPage() {
       badge: currentLang === 'th' ? 'ตัวเลือกที่เป็นมิตร' : 'Friendly Choice',
       badgeColor: 'bg-blue-500',
       price: { adult: 1400, child: 800 },
-      image: '/api/placeholder/400/300',
+      image: '/images/elephants/packages/packthree.jpg',
       activities: currentLang === 'th'
         ? ['ป้อนอาหารช้าง', 'ถ่ายภาพกับช้าง', 'เรียนรู้พฤติกรรมช้าง', 'สาธิตการเคาะยาง', 'สาธิตการทำแผ่นยาง']
         : ['Feeding elephants', 'Taking photos with elephants', 'Learning elephant behaviors', 'Rubber tapping demonstration', 'Rubber sheet making demonstration'],
@@ -135,12 +135,17 @@ export default function PackagesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-green-600 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+      <section className="relative w-full">
+        <img
+          src="/images/elephants/hero/banner.jpg"
+          alt="Elephant Banner"
+          className="w-full h-[200px] md:h-[320px] object-cover object-center"
+        />
+        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-white px-4">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg">
             {currentContent.title}
           </h1>
-          <p className="text-xl text-green-100 max-w-3xl mx-auto">
+          <p className="text-xl max-w-3xl mx-auto drop-shadow">
             {currentContent.subtitle}
           </p>
         </div>

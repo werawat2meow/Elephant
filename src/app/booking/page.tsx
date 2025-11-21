@@ -239,9 +239,9 @@ export default function BookingPage() {
       {/* Progress Steps */}
       <section className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex w-full overflow-x-auto flex-nowrap items-center justify-start md:justify-between">
             {currentContent.steps.map((stepName, index) => (
-              <div key={index} className="flex items-center">
+              <div key={index} className="flex items-center flex-shrink-0">
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
                   index + 1 <= step 
                     ? 'bg-green-600 text-white' 
@@ -326,7 +326,7 @@ function PackageSelection({
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
         {selectPackageText[currentLang as keyof typeof selectPackageText] || selectPackageText.en}
       </h2>
-      <div className="grid gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {packages.map((pkg: Package) => (
           <div
             key={pkg.id}

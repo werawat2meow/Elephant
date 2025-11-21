@@ -184,7 +184,7 @@ export default function PackageFilter({ filters, onFiltersChange, currentLang }:
         <select
           value={filters.sortBy}
           onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 text-black"
         >
           <option value="popular">{currentContent.popular}</option>
           <option value="price-low">{currentContent.priceLow}</option>
