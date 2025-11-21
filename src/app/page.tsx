@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import { useLanguage } from '../contexts/LanguageContext'
 import PackageCard from '../components/PackageCard'
 import ReviewCard from '../components/ReviewCard'
@@ -226,7 +227,7 @@ export default function Home() {
       badge: getPackageBadge(1),
       badgeColor: 'bg-yellow-500',
       price: { adult: 2700, child: 1500 },
-      image: '/api/placeholder/400/300',
+      image: '/images/elephants/packages/packone.jpg',
       activities: getPackageActivities(1),
       times: ['9:00 AM', '2:00 PM']
     },
@@ -237,7 +238,7 @@ export default function Home() {
       badge: getPackageBadge(2),
       badgeColor: 'bg-green-500',
       price: { adult: 1600, child: 1000 },
-      image: '/api/placeholder/400/300',
+      image: '/images/elephants/packages/packtwo.jpg',
       activities: getPackageActivities(2),
       times: ['9:00 AM', '11:00 AM', '2:00 PM']
     },
@@ -248,7 +249,7 @@ export default function Home() {
       badge: getPackageBadge(3),
       badgeColor: 'bg-blue-500',
       price: { adult: 1400, child: 800 },
-      image: '/api/placeholder/400/300',
+      image: '/images/elephants/packages/packtree.jpg',
       activities: getPackageActivities(3),
       times: ['9:00 AM', '11:00 AM', '2:00 PM']
     }
@@ -370,7 +371,10 @@ export default function Home() {
   return (
     <div className="overflow-hidden">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-green-600 to-green-800 text-white">
+      <section 
+        className="relative bg-green-600 text-white py-16 h-[70vh] flex items-center bg-cover bg-center bg-no-repeat"
+        style={{backgroundImage: "url('/images/elephants/hero/banner.jpg')"}}
+      >
         <div className="absolute inset-0 bg-black opacity-20"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
           <div className="text-center">
@@ -383,17 +387,17 @@ export default function Home() {
             <p className="text-lg mb-8 max-w-3xl mx-auto text-green-50">
               {currentContent.hero.description}
             </p>
-            <Button
-              variant="outline"
-              size="lg"
-              className="bg-white text-green-600 border-2 border-green-600 hover:bg-green-600 hover:text-white font-semibold px-8 py-4 text-lg shadow-lg transition-all duration-300"
-            >
-              {currentContent.hero.cta}
-            </Button>
+            <Link href="/booking">
+              <Button
+                variant="outline"
+                size="lg"
+                className="bg-white text-green-600 border-2 border-green-600 hover:bg-green-600 hover:text-white font-semibold px-8 py-4 text-lg shadow-lg transition-all duration-300"
+              >
+                {currentContent.hero.cta}
+              </Button>
+            </Link>
           </div>
         </div>
-        {/* Background pattern */}
-        <div className="absolute bottom-0 left-0 w-full h-20 bg-white transform -skew-y-1 origin-bottom-left"></div>
       </section>
 
       {/* Features Section */}

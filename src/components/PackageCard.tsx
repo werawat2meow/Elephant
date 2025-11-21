@@ -22,8 +22,12 @@ export default function PackageCard({ package: pkg, currentLang }: PackageCardPr
     <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
       {/* Image with Badge */}
       <div className="relative">
-        <div className="h-48 bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center">
-          <span className="text-6xl">🐘</span>
+        <div className="h-48 bg-gray-200 overflow-hidden">
+          <img 
+            src={pkg.image} 
+            alt={pkg.name}
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+          />
         </div>
         <div className={`absolute top-4 right-4 ${pkg.badgeColor} text-white px-3 py-1 rounded-full text-sm font-medium`}>
           {pkg.badge}
