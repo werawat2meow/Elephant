@@ -85,7 +85,7 @@ export default function PackagesPage() {
       badge: currentLang === 'th' ? 'ตัวเลือกที่เป็นมิตร' : 'Friendly Choice',
       badgeColor: 'bg-blue-500',
       price: { adult: 1400, child: 800 },
-      image: '/images/elephants/packages/packthree.jpg',
+      image: '/images/elephants/packages/packtree.jpg',
       activities: currentLang === 'th'
         ? ['ป้อนอาหารช้าง', 'ถ่ายภาพกับช้าง', 'เรียนรู้พฤติกรรมช้าง', 'สาธิตการเคาะยาง', 'สาธิตการทำแผ่นยาง']
         : ['Feeding elephants', 'Taking photos with elephants', 'Learning elephant behaviors', 'Rubber tapping demonstration', 'Rubber sheet making demonstration'],
