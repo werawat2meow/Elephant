@@ -1,12 +1,15 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { LanguageProvider } from '../contexts/LanguageContext'
+import ClientLayout from './ClientLayout'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'New Project',
-  description: 'A new project built with Next.js and Tailwind CSS',
+  title: 'Elephant Nature Sanctuary | Ethical Elephant Tours',
+  description: 'Experience ethical elephant tourism in Thailand. Feed elephants, observe their natural behaviors, and support conservation efforts.',
+  keywords: 'elephant sanctuary, ethical tourism, Thailand, elephant conservation, eco-tourism',
 }
 
 export default function RootLayout({
@@ -15,8 +18,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="th">
+      <body className={inter.className}>
+        <LanguageProvider>
+          <ClientLayout>
+            {children}
+          </ClientLayout>
+        </LanguageProvider>
+      </body>
     </html>
   )
 }
