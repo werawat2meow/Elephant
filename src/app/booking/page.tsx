@@ -1,5 +1,5 @@
-'use client'
-import { useState } from 'react'
+"use client"
+import { useState, useEffect } from 'react'
 import { useLanguage } from '../../contexts/LanguageContext'
 import BookingCalendar from '../../components/BookingCalendar'
 import BookingForm from '../../components/BookingForm'
@@ -17,6 +17,7 @@ interface Package {
 
 export default function BookingPage() {
   const { currentLang } = useLanguage()
+  // Hydration-safe: always start at step 1 and packageId null, then update client-side
   const [step, setStep] = useState(1)
   const [bookingData, setBookingData] = useState({
     packageId: null as number | null,
@@ -29,9 +30,27 @@ export default function BookingPage() {
     contactInfo: null as any
   })
 
+  // On mount, read packageId from query string and update state
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const id = params.get('packageId')
+      if (id) {
+        setBookingData((prev) => {
+          // Only update if not already set
+          if (prev.packageId !== Number(id)) {
+            setStep(2)
+            return { ...prev, packageId: Number(id) }
+          }
+          return prev
+        })
+      }
+    }
+  }, [])
+
   const content = {
     th: {
-      title: 'จองทัวร์ช้างธรรมชาติ',
+      title: 'จองทัวร์ได้เลย',
       subtitle: 'จองประสบการณ์ช้างธรรมชาติที่น่าจดจำ',
       steps: [
         'เลือกโปรแกรม',
@@ -45,7 +64,7 @@ export default function BookingPage() {
       confirmation: 'ยืนยันการจอง'
     },
     en: {
-      title: 'Book Your Elephant Tour',
+      title: 'Book Now',
       subtitle: 'Reserve your unforgettable ethical elephant experience',
       steps: [
         'Select Package',
@@ -59,7 +78,7 @@ export default function BookingPage() {
       confirmation: 'Confirm Booking'
     },
     de: {
-      title: 'Buchen Sie Ihre Elefantentour',
+      title: 'Jetzt buchen',
       subtitle: 'Reservieren Sie Ihr unvergessliches ethisches Elefantenerlebnis',
       steps: [
         'Paket auswählen',
@@ -73,7 +92,7 @@ export default function BookingPage() {
       confirmation: 'Buchung bestätigen'
     },
     cn: {
-      title: '预订大象之旅',
+      title: '立即预订',
       subtitle: '预订您难忘的道德大象体验',
       steps: [
         '选择套餐',
@@ -87,7 +106,7 @@ export default function BookingPage() {
       confirmation: '确认预订'
     },
     fr: {
-      title: 'Réservez votre Tour d\'Éléphants',
+      title: 'Réservez maintenant',
       subtitle: 'Réservez votre expérience éthique inoubliable avec les éléphants',
       steps: [
         'Sélectionner le forfait',
@@ -176,8 +195,148 @@ export default function BookingPage() {
       badge: getPackageBadge(3),
       times: ['9:00 AM', '11:00 AM', '2:00 PM'],
       activities: getPackageActivities(3)
+    },
+    {
+      id: 4,
+      name: currentLang === 'th' ? 'คลาสทำอาหารไทย & ป้อนกล้วย' : currentLang === 'en' ? 'Traditional Thai Cooking Class & Feed Me Bananas' : currentLang === 'de' ? 'Traditioneller Thai-Kochkurs & Bananen füttern' : currentLang === 'cn' ? '传统泰式烹饪课和喂香蕉' : 'Cours de cuisine thaïe traditionnelle & Donne-moi des bananes',
+      duration: currentLang === 'th' ? '3.30 - 4.30 ชั่วโมง' : '3.30 - 4.30 hrs.',
+      price: { adult: 2750, child: 1550 },
+      badge: currentLang === 'th' ? 'ทำอาหารไทย + ป้อนช้าง' : currentLang === 'en' ? 'Thai Cooking + Feed Elephants' : currentLang === 'de' ? 'Thai-Kochkurs + Elefanten füttern' : currentLang === 'cn' ? '泰式烹饪+喂大象' : 'Cuisine thaïe + Nourrir les éléphants',
+      times: ['9:00 AM', '2:00 PM'],
+      activities: currentLang === 'th' ? [
+        'เครื่องดื่มต้อนรับชาไทย/กาแฟ',
+        'ป้อนกล้วยหรือแตงโมให้ช้าง',
+        'เรียนทำอาหารไทยกับครูผู้เชี่ยวชาญ',
+        'เมนู: ต้มยำกุ้ง, แกงเขียวหวาน, ผัดไทย',
+        'รับประทานอาหารกลางวันท่ามกลางธรรมชาติ'
+      ] : currentLang === 'en' ? [
+        'Welcoming drink with Thai tea & coffee',
+        'Feed bananas or watermelon to elephants',
+        'Learn Thai cooking with expert teacher',
+        'Menu: Tom Yum Kung, Green Curry, Pad Thai',
+        'Enjoy lunch in beautiful scenery'
+      ] : currentLang === 'de' ? [
+        'Begrüßungsgetränk mit Thai-Tee/Kaffee',
+        'Füttern Sie Elefanten mit Bananen oder Wassermelone',
+        'Lernen Sie thailändisches Kochen mit Experten',
+        'Menü: Tom Yum Kung, Grünes Curry, Pad Thai',
+        'Genießen Sie das Mittagessen in schöner Umgebung'
+      ] : currentLang === 'cn' ? [
+        '泰茶/咖啡迎宾饮品',
+        '给大象喂香蕉或西瓜',
+        '与专家学习泰式烹饪',
+        '菜单：冬阴功、青咖喱、泰式炒河粉',
+        '在美丽风景中享用午餐'
+      ] : [
+        'Boisson de bienvenue avec thé thaï/café',
+        'Nourrir les éléphants avec bananes ou pastèque',
+        'Apprendre la cuisine thaïe avec un expert',
+        'Menu : Tom Yum Kung, Curry vert, Pad Thaï',
+        'Déjeuner dans un cadre magnifique'
+      ]
+    },
+    {
+      id: 5,
+      name: currentLang === 'th' ? 'คลาสทำอาหารไทยพิเศษ & สำรวจช้าง' : currentLang === 'en' ? 'Exclusive Thai Cooking Class & Exploring Elephants' : currentLang === 'de' ? 'Exklusiver Thai-Kochkurs & Elefanten erkunden' : currentLang === 'cn' ? '独家泰式烹饪课和探索大象' : 'Cours de cuisine thaïe exclusif & Exploration des éléphants',
+      duration: currentLang === 'th' ? '5.00 - 6.00 ชั่วโมง' : '5.00 - 6.00 hours',
+      price: { adult: 3350, child: 1850 },
+      badge: currentLang === 'th' ? 'ทำอาหารไทย + สำรวจช้าง' : currentLang === 'en' ? 'Thai Cooking + Explore Elephants' : currentLang === 'de' ? 'Thai-Kochkurs + Elefanten erkunden' : currentLang === 'cn' ? '泰式烹饪+探索大象' : 'Cuisine thaïe + Explorer les éléphants',
+      times: ['9:00 AM'],
+      activities: currentLang === 'th' ? [
+        'เครื่องดื่มต้อนรับชาไทย/กาแฟ',
+        'ป้อนกล้วยให้ช้าง',
+        'เรียนรู้การทำอาหารและวัฒนธรรมไทยกับครูผู้เชี่ยวชาญ',
+        'เมนู: ต้มยำกุ้ง, แกงเขียวหวาน, ผัดไทย',
+        'สังเกตพฤติกรรมช้าง',
+        'รับประทานอาหารกลางวันท่ามกลางธรรมชาติ'
+      ] : currentLang === 'en' ? [
+        'Welcoming drink with Thai tea & coffee',
+        'Feed bananas to elephants',
+        'Explore Thai cooking and culture with expert teacher',
+        'Menu: Tom Yum Kung, Green Curry, Pad Thai',
+        'Observe elephant behaviors',
+        'Enjoy lunch in beautiful scenery'
+      ] : currentLang === 'de' ? [
+        'Begrüßungsgetränk mit Thai-Tee/Kaffee',
+        'Füttern Sie Elefanten mit Bananen',
+        'Entdecken Sie thailändische Küche und Kultur mit Experten',
+        'Menü: Tom Yum Kung, Grünes Curry, Pad Thai',
+        'Beobachten Sie das Verhalten der Elefanten',
+        'Genießen Sie das Mittagessen in schöner Umgebung'
+      ] : currentLang === 'cn' ? [
+        '泰茶/咖啡迎宾饮品',
+        '给大象喂香蕉',
+        '与专家探索泰式烹饪和文化',
+        '菜单：冬阴功、青咖喱、泰式炒河粉',
+        '观察大象行为',
+        '在美丽风景中享用午餐'
+      ] : [
+        'Boisson de bienvenue avec thé thaï/café',
+        'Nourrir les éléphants avec bananes',
+        'Explorer la cuisine et la culture thaïe avec un expert',
+        'Menu : Tom Yum Kung, Curry vert, Pad Thaï',
+        'Observer le comportement des éléphants',
+        'Déjeuner dans un cadre magnifique'
+      ]
     }
   ]
+
+  // ...existing code...
+
+  // ฟังก์ชันส่งข้อมูลไป LINE Noti
+  const handleConfirmBooking = async () => {
+    const payload = {
+      packageName: getPackageName(bookingData.packageId!),
+      date: bookingData.date,
+      time: bookingData.timeSlot,
+      adults: bookingData.adults,
+      children: bookingData.children,
+      infants: bookingData.infants,
+      totalPrice: bookingData.totalPrice,
+      name: bookingData.contactInfo?.name || "",
+      email: bookingData.contactInfo?.email || "",
+      phone: bookingData.contactInfo?.phone || "",
+      hotel: bookingData.contactInfo?.hotel || "",
+      roomNumber: bookingData.contactInfo?.roomNumber || "",
+      whatsapp: bookingData.contactInfo?.whatsapp || "",
+      specialRequests: bookingData.contactInfo?.specialRequests || ""
+    };
+    try {
+      const res = await fetch("/api/booking-notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        alert("Confirm Booking");
+        // Reset booking data and go to step 1
+        setBookingData({
+          packageId: null,
+          date: null,
+          timeSlot: null,
+          adults: 1,
+          children: 0,
+          infants: 0,
+          totalPrice: 0,
+          contactInfo: {
+            name: "",
+            email: "",
+            phone: "",
+            nationality: "",
+            specialRequests: "",
+            hotel: "",
+            roomNumber: "",
+            whatsapp: "",
+          },
+        });
+        setStep(1);
+      } else {
+        alert("Error sending data");
+      }
+    } catch (err) {
+      alert("Error connecting to API");
+    }
+  };
 
   const renderStep = () => {
     switch (step) {
@@ -215,6 +374,7 @@ export default function BookingPage() {
             bookingData={bookingData}
             packages={packages}
             currentLang={currentLang}
+            onConfirm={handleConfirmBooking}
           />
         )
       default:
@@ -223,21 +383,28 @@ export default function BookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero */}
-      <section className="bg-green-600 text-white py-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            {currentContent.title}
-          </h1>
-          <p className="text-xl text-green-100">
-            {currentContent.subtitle}
-          </p>
+    <div className="min-h-screen bg-gray-50 text-black">
+      {/* Hero Section - Same as Homepage */}
+      <section 
+        className="relative bg-green-600 text-white py-16 h-[35vh] flex items-center bg-cover bg-center bg-no-repeat"
+        style={{backgroundImage: "url('/images/elephants/hero/banner.jpg')"}}
+      >
+        <div className="absolute inset-0 bg-black opacity-20"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+              <span className="text-black">{currentContent.title}</span>
+            </h1>
+            <p className="text-xl md:text-2xl mb-4 text-green-100">
+              <span className="text-black">{currentContent.subtitle}</span>
+            </p>
+            {/* Optionally add a CTA button here if needed */}
+          </div>
         </div>
       </section>
 
       {/* Progress Steps */}
-      <section className="bg-white border-b">
+      <section className="bg-white border-b text-black">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex w-full overflow-x-auto flex-nowrap items-center justify-start md:justify-between">
             {currentContent.steps.map((stepName, index) => (
@@ -250,7 +417,7 @@ export default function BookingPage() {
                   {index + 1}
                 </div>
                 <span className={`ml-2 text-sm font-medium ${
-                  index + 1 <= step ? 'text-green-600' : 'text-gray-500'
+                  index + 1 <= step ? 'text-green-600' : 'text-black'
                 }`}>
                   {stepName}
                 </span>
@@ -266,7 +433,7 @@ export default function BookingPage() {
       </section>
 
       {/* Content */}
-      <section className="py-8">
+      <section className="py-8 text-black">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {renderStep()}
           
@@ -279,21 +446,28 @@ export default function BookingPage() {
             >
               {currentLang === 'th' ? 'ย้อนกลับ' : 'Back'}
             </Button>
-            
-            <Button
-              variant="primary"
-              onClick={() => step < 4 && setStep(step + 1)}
-              className="bg-green-600 hover:bg-green-700"
-              disabled={
-                (step === 1 && !bookingData.packageId) ||
-                (step === 2 && (!bookingData.date || !bookingData.timeSlot))
-              }
-            >
-              {step === 4 
-                ? (currentLang === 'th' ? 'ยืนยันการจอง' : 'Confirm Booking')
-                : (currentLang === 'th' ? 'ถัดไป' : 'Next')
-              }
-            </Button>
+
+            {step === 4 ? (
+              <button
+                type="button"
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold"
+                onClick={handleConfirmBooking}
+              >
+                {currentLang === 'th' ? 'ยืนยันการจอง' : 'Confirm Booking'}
+              </button>
+            ) : (
+              <Button
+                variant="primary"
+                onClick={() => step < 4 && setStep(step + 1)}
+                className="bg-green-600 hover:bg-green-700"
+                disabled={
+                  (step === 1 && !bookingData.packageId) ||
+                  (step === 2 && (!bookingData.date || !bookingData.timeSlot))
+                }
+              >
+                {currentLang === 'th' ? 'ถัดไป' : 'Next'}
+              </Button>
+            )}
           </div>
         </div>
       </section>
@@ -326,77 +500,95 @@ function PackageSelection({
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
         {selectPackageText[currentLang as keyof typeof selectPackageText] || selectPackageText.en}
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {packages.map((pkg: Package) => (
-          <div
-            key={pkg.id}
-            onClick={() => onSelect(pkg)}
-            className={`border-2 rounded-lg p-6 cursor-pointer transition-all ${
-              selectedPackage === pkg.id
-                ? 'border-green-600 bg-green-50'
-                : 'border-gray-200 hover:border-green-300'
-            }`}
-          >
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center mb-2">
-                  <h3 className="text-xl font-semibold text-gray-900">{pkg.name}</h3>
-                  <span className="ml-3 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                    {pkg.duration}
-                  </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {packages.map((pkg: Package) => (
+                <div
+                  key={pkg.id}
+                  onClick={() => onSelect(pkg)}
+                  className={`border-2 rounded-lg p-6 cursor-pointer transition-all ${
+                    selectedPackage === pkg.id
+                      ? 'border-green-600 bg-green-50'
+                      : 'border-gray-200 hover:border-green-300'
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex flex-row items-center mb-2 gap-2">
+                        <h3 className="text-xl font-semibold text-gray-900">{pkg.name}</h3>
+                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                          {pkg.duration}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <p className="text-sm text-gray-600 mb-1">
+                            {currentLang === 'th' ? 'ราคาผู้ใหญ่:' : currentLang === 'de' ? 'Erwachsenenpreis:' : currentLang === 'cn' ? '成人价格:' : currentLang === 'fr' ? 'Prix adulte:' : 'Adult Price:'}
+                          </p>
+                          <p className="text-lg font-bold text-green-600">฿{pkg.price.adult.toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 mb-1">
+                            {currentLang === 'th' ? 'ราคาเด็ก:' : currentLang === 'de' ? 'Kinderpreis:' : currentLang === 'cn' ? '儿童价格:' : currentLang === 'fr' ? 'Prix enfant:' : 'Child Price:'}
+                          </p>
+                          <p className="text-lg font-bold text-green-600">฿{pkg.price.child.toLocaleString()}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">
+                          {currentLang === 'th' ? 'กิจกรรมที่รวม:' : currentLang === 'de' ? 'Inbegriffene Aktivitäten:' : currentLang === 'cn' ? '包含活动:' : currentLang === 'fr' ? 'Activités incluses:' : 'Included Activities:'}
+                        </p>
+                        {/* กำหนดชุดสีที่หลากหลาย */}
+                        {(() => {
+                          const colorSets = [
+                            { bg: 'bg-blue-50', text: 'text-blue-700' },
+                            { bg: 'bg-green-50', text: 'text-green-700' },
+                            { bg: 'bg-yellow-50', text: 'text-yellow-700' },
+                            { bg: 'bg-pink-50', text: 'text-pink-700' },
+                            { bg: 'bg-purple-50', text: 'text-purple-700' },
+                            { bg: 'bg-orange-50', text: 'text-orange-700' },
+                          ];
+                          return (
+                            <div className="flex flex-wrap gap-2">
+                              {pkg.activities.slice(0, 4).map((activity, index) => {
+                                const color = colorSets[index % colorSets.length];
+                                return (
+                                  <span
+                                    key={index}
+                                    className={`text-xs ${color.bg} ${color.text} px-2 py-1 rounded shadow-sm`}
+                                  >
+                                    {activity}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      {selectedPackage === pkg.id && (
+                        <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm">✓</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">
-                      {currentLang === 'th' ? 'ราคาผู้ใหญ่:' : currentLang === 'de' ? 'Erwachsenenpreis:' : currentLang === 'cn' ? '成人价格:' : currentLang === 'fr' ? 'Prix adulte:' : 'Adult Price:'}
-                    </p>
-                    <p className="text-lg font-bold text-green-600">฿{pkg.price.adult.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">
-                      {currentLang === 'th' ? 'ราคาเด็ก:' : currentLang === 'de' ? 'Kinderpreis:' : currentLang === 'cn' ? '儿童价格:' : currentLang === 'fr' ? 'Prix enfant:' : 'Child Price:'}
-                    </p>
-                    <p className="text-lg font-bold text-green-600">฿{pkg.price.child.toLocaleString()}</p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2">
-                    {currentLang === 'th' ? 'กิจกรรมที่รวม:' : currentLang === 'de' ? 'Inbegriffene Aktivitäten:' : currentLang === 'cn' ? '包含活动:' : currentLang === 'fr' ? 'Activités incluses:' : 'Included Activities:'}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {pkg.activities.slice(0, 4).map((activity, index) => (
-                      <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                        {activity}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="ml-4">
-                {selectedPackage === pkg.id && (
-                  <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm">✓</span>
-                  </div>
-                )}
-              </div>
+              ))}
             </div>
-          </div>
-        ))}
-      </div>
     </div>
   )
 }
 
 // Booking Confirmation Component  
-function BookingConfirmation({ 
-  bookingData, 
-  packages, 
-  currentLang 
-}: {
-  bookingData: any
-  packages: Package[]
-  currentLang: string
-}) {
+interface BookingConfirmationProps {
+  bookingData: any;
+  packages: Package[];
+  currentLang: string;
+  onConfirm?: () => void;
+}
+
+function BookingConfirmation({ bookingData, packages, currentLang, onConfirm }: BookingConfirmationProps) {
   const selectedPackage = packages.find((pkg: Package) => pkg.id === bookingData.packageId)
   
   const confirmText = {
@@ -462,7 +654,6 @@ function BookingConfirmation({
           <h3 className="text-lg font-semibold">{selectedPackage?.name}</h3>
           <p className="text-gray-600">{selectedPackage?.duration}</p>
         </div>
-        
         <div className="space-y-4">
           <div className="flex justify-between">
             <span>{labels.date[currentLang as keyof typeof labels.date] || labels.date.en}</span>
@@ -478,6 +669,42 @@ function BookingConfirmation({
               {bookingData.adults} {labels.adults[currentLang as keyof typeof labels.adults] || labels.adults.en}, {bookingData.children} {labels.children[currentLang as keyof typeof labels.children] || labels.children.en}
             </span>
           </div>
+          {/* เพิ่ม Contact Details ที่กรอก */}
+          {bookingData.contactInfo && (
+            <div className="border-t pt-4 space-y-2">
+              <div className="font-bold mb-2">Contact Details</div>
+              <div className="flex justify-between">
+                <span>Full Name:</span>
+                <span>{bookingData.contactInfo.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Email:</span>
+                <span>{bookingData.contactInfo.email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Phone:</span>
+                <span>{bookingData.contactInfo.phone}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Hotel:</span>
+                <span>{bookingData.contactInfo.hotel}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Room Number:</span>
+                <span>{bookingData.contactInfo.roomNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>WhatsApp:</span>
+                <span>{bookingData.contactInfo.whatsapp}</span>
+              </div>
+              {bookingData.contactInfo.specialRequests && (
+                <div className="flex justify-between">
+                  <span>Special Requests:</span>
+                  <span>{bookingData.contactInfo.specialRequests}</span>
+                </div>
+              )}
+            </div>
+          )}
           <div className="border-t pt-4">
             <div className="flex justify-between text-lg font-bold">
               <span>{labels.total[currentLang as keyof typeof labels.total] || labels.total.en}</span>
@@ -485,6 +712,7 @@ function BookingConfirmation({
             </div>
           </div>
         </div>
+        {/* ...existing code... */}
       </div>
     </div>
   )

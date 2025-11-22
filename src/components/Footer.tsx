@@ -5,8 +5,8 @@ interface FooterProps {
 export default function Footer({ currentLang }: FooterProps) {
   const content = {
     th: {
-      title: 'Bukit Elephant Park',
-      description: 'ศูนย์อนุรักษ์ช้างที่มุ่งเน้นการท่องเที่ยวเชิงอนุรักษ์ เคารพธรรมชาติและสวัสดิภาพของช้าง',
+      title: 'Jasmine Tour',
+      description: 'บริการจองทัวร์และกิจกรรมหลากหลาย ทั้งธรรมชาติ ทะเล และอื่นๆ สำหรับทุกไลฟ์สไตล์',
       quickLinks: 'ลิงก์ด่วน',
       contact: 'ติดต่อเรา',
       address: 'ที่อยู่: 78/10 หมู่ 6 ตำบล ฉลอง ภูเก็ต 83130',
@@ -23,8 +23,8 @@ export default function Footer({ currentLang }: FooterProps) {
       ]
     },
     en: {
-      title: 'Bukit Elephant Park',
-      description: 'An elephant sanctuary focused on ethical tourism, respecting nature and elephant welfare',
+      title: 'Jasmine Tour',
+      description: 'Booking tours and activities for all lifestyles: nature, sea, adventure, and more',
       quickLinks: 'Quick Links',
       contact: 'Contact Info',
       address: 'Address: 78/10 Moo 6, Chalong, Phuket 83130',
@@ -41,8 +41,8 @@ export default function Footer({ currentLang }: FooterProps) {
       ]
     },
     de: {
-      title: 'Bukit Elephant Park',
-      description: 'Ein Elefantenschutzgebiet mit Fokus auf ethischen Tourismus, das die Natur und das Wohlbefinden der Elefanten respektiert',
+      title: 'Jasmine Tour',
+      description: 'Buchung von Touren und Aktivitäten für jeden Lebensstil: Natur, Meer, Abenteuer und mehr',
       quickLinks: 'Schnelle Links',
       contact: 'Kontaktinfo',
       address: 'Adresse: 78/10 Moo 6, Chalong, Phuket 83130',
@@ -59,8 +59,8 @@ export default function Footer({ currentLang }: FooterProps) {
       ]
     },
     cn: {
-      title: 'Bukit Elephant Park',
-      description: '专注于道德旅游的大象保护区，尊重自然和大象福利',
+      title: 'Jasmine Tour',
+      description: '为各种生活方式预订旅游和活动：自然、海洋、冒险等',
       quickLinks: '快速链接',
       contact: '联系信息',
       address: '地址：78/10 Moo 6, Chalong, 普吉岛 83130',
@@ -77,8 +77,8 @@ export default function Footer({ currentLang }: FooterProps) {
       ]
     },
     fr: {
-      title: 'Bukit Elephant Park',
-      description: 'Un sanctuaire d\'éléphants axé sur le tourisme éthique, respectant la nature et le bien-être des éléphants',
+      title: 'Jasmine Tour',
+      description: 'Réservation de circuits et d\'activités pour tous les styles de vie : nature, mer, aventure et plus encore',
       quickLinks: 'Liens rapides',
       contact: 'Infos contact',
       address: 'Adresse : 78/10 Moo 6, Chalong, Phuket 83130',
@@ -101,7 +101,7 @@ export default function Footer({ currentLang }: FooterProps) {
   return (
     <footer className="bg-gray-800 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {/* About */}
           <div className="lg:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
@@ -142,29 +142,6 @@ export default function Footer({ currentLang }: FooterProps) {
                 </li>
               ))}
             </ul>
-          </div>
-
-          {/* Contact Info */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4">{currentContent.contact}</h4>
-            <div className="space-y-2 text-gray-300">
-              <p className="flex items-start">
-                <span className="mr-2">📍</span>
-                {currentContent.address}
-              </p>
-              <p className="flex items-center">
-                <span className="mr-2">📞</span>
-                {currentContent.phone}
-              </p>
-              <p className="flex items-center">
-                <span className="mr-2">✉️</span>
-                {currentContent.email}
-              </p>
-              <p className="flex items-center">
-                <span className="mr-2">🕐</span>
-                {currentContent.hours}
-              </p>
-            </div>
           </div>
         </div>
 

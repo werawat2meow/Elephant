@@ -483,29 +483,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* CTA Section */}
-      <section className="py-16 bg-green-600 text-white">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            {currentLang === 'th' 
-              ? 'พร้อมสำหรับประสบการณ์ที่น่าจดจำแล้วหรือยัง?' 
-              : 'Ready for an Unforgettable Experience?'}
-          </h2>
-          <p className="text-xl mb-8 text-green-100">
-            {currentLang === 'th'
-              ? 'จองทัวร์ช้างธรรมชาติของคุณวันนี้และร่วมสนับสนุนการอนุรักษ์'
-              : 'Book your ethical elephant tour today and support conservation efforts'}
-          </p>
-          <Button
-            variant="outline"
-            size="lg"
-            className="border-2 border-white text-white hover:bg-white hover:text-green-600 px-8 py-4 text-lg font-medium shadow-lg transition-all duration-300"
-          >
-            {currentLang === 'th' ? 'ดูโปรแกรมทั้งหมด' : 'View All Packages'}
-          </Button>
-        </div>
-      </section>
     </div>
   )
 }

@@ -15,35 +15,30 @@ export default function Navigation({ currentLang, onLanguageChange }: Navigation
     th: [
       { href: '/', label: 'หน้าแรก' },
       { href: '/packages', label: 'โปรแกรมทัวร์' },
-      { href: '/about', label: 'เกี่ยวกับเรา' },
       { href: '/gallery', label: 'ภาพกิจกรรม' },
       { href: '/contact', label: 'ติดต่อเรา' }
     ],
     en: [
       { href: '/', label: 'Home' },
       { href: '/packages', label: 'Tour Packages' },
-      { href: '/about', label: 'About Us' },
       { href: '/gallery', label: 'Gallery' },
       { href: '/contact', label: 'Contact' }
     ],
     de: [
       { href: '/', label: 'Startseite' },
       { href: '/packages', label: 'Tourpakete' },
-      { href: '/about', label: 'Über uns' },
       { href: '/gallery', label: 'Galerie' },
       { href: '/contact', label: 'Kontakt' }
     ],
     cn: [
       { href: '/', label: '首页' },
       { href: '/packages', label: '旅游套餐' },
-      { href: '/about', label: '关于我们' },
       { href: '/gallery', label: '图片集' },
       { href: '/contact', label: '联系我们' }
     ],
     fr: [
       { href: '/', label: 'Accueil' },
       { href: '/packages', label: 'Forfaits Circuit' },
-      { href: '/about', label: 'À propos' },
       { href: '/gallery', label: 'Galerie' },
       { href: '/contact', label: 'Contact' }
     ]
@@ -59,7 +54,7 @@ export default function Navigation({ currentLang, onLanguageChange }: Navigation
           <Link href="/" className="flex items-center space-x-2">
             <div className="text-2xl">🐘</div>
             <span className="font-bold text-xl text-green-700">
-              {currentLang === 'th' ? 'ช้างธรรมชาติ' : 'Elephant Nature'}
+              {currentLang === 'th' ? 'Jasmine Tour' : 'Jasmine Tour'}
             </span>
           </Link>
 

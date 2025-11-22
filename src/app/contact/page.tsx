@@ -246,17 +246,6 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-green-600 text-white py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {currentContent.title}
-          </h1>
-          <p className="text-xl text-green-100">
-            {currentContent.subtitle}
-          </p>
-        </div>
-      </section>
 
       {/* Contact Content */}
       <section className="py-16 bg-gray-50">
@@ -265,62 +254,6 @@ export default function ContactPage() {
             
             {/* Contact Information */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-8">
-                {currentContent.contactInfo}
-              </h2>
-              
-              <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-                <div className="space-y-6">
-                  {/* Address */}
-                  <div className="flex items-start">
-                    <span className="text-2xl mr-4">📍</span>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-1">
-                        {currentContent.address}
-                      </h3>
-                      <p className="text-gray-600">
-                        {currentContent.addressDetail}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Phone */}
-                  <div className="flex items-start">
-                    <span className="text-2xl mr-4">📞</span>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-1">
-                        {currentContent.phone}
-                      </h3>
-                      <p className="text-gray-600">098 439 2999</p>
-                    </div>
-                  </div>
-
-                  {/* Email */}
-                  <div className="flex items-start">
-                    <span className="text-2xl mr-4">✉️</span>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-1">
-                        {currentContent.email}
-                      </h3>
-                      <p className="text-gray-600">bukitelephantpark.com</p>
-                    </div>
-                  </div>
-
-                  {/* Hours */}
-                  <div className="flex items-start">
-                    <span className="text-2xl mr-4">🕐</span>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-1">
-                        {currentContent.hours}
-                      </h3>
-                      <p className="text-gray-600">
-                        {currentContent.hoursDetail}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Social Media */}
               <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -336,34 +269,6 @@ export default function ContactPage() {
                   <a href="#" className="bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition-colors">
                     💬 Line
                   </a>
-                </div>
-              </div>
-
-              {/* Map */}
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  {currentContent.map}
-                </h3>
-                <div className="mb-4">
-                  <iframe 
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3952.319467947447!2d98.31864387568523!3d7.861597306167686!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30502ff7b0acb3b9%3A0x7fbf2b8eb29422ae!2sBukit%20Elephant%20Park!5e0!3m2!1sth!2sth!4v1732179225155!5m2!1sth!2sth" 
-                    width="100%" 
-                    height="250" 
-                    style={{border:0}} 
-                    allowFullScreen={true} 
-                    loading="lazy" 
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="Bukit Elephant Park Location"
-                    className="w-full rounded-lg"
-                  />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">
-                    {currentContent.directions}
-                  </h4>
-                  <p className="text-gray-600 text-sm">
-                    {currentContent.directionsText}
-                  </p>
                 </div>
               </div>
             </div>

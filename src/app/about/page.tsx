@@ -208,13 +208,17 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative bg-green-600 text-white py-20">
-        <div className="absolute inset-0 bg-black opacity-20"></div>
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section className="relative w-full">
+        <img
+          src="/images/elephants/hero/banner.jpg"
+          alt="Banner"
+          className="w-full h-[200px] md:h-[320px] object-cover object-center"
+        />
+        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-white px-4">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
             {currentContent.title}
           </h1>
-          <p className="text-xl text-green-100 max-w-3xl mx-auto">
+          <p className="text-xl max-w-3xl mx-auto">
             {currentContent.subtitle}
           </p>
         </div>
@@ -234,7 +238,9 @@ export default function AboutPage() {
           
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="bg-green-100 rounded-lg p-8">
-              <div className="text-6xl mb-4 text-center">🐘</div>
+              <div className="mb-4 flex justify-center">
+                <img src="/images/elephants/packages/packone.jpg" alt="Elephant" className="h-16 w-16 object-cover rounded-full shadow" />
+              </div>
               <h3 className="text-xl font-semibold text-center mb-4">
                 {currentLang === 'th' ? 'ช้างในความดูแล' : 'Elephants in Our Care'}
               </h3>
@@ -247,7 +253,9 @@ export default function AboutPage() {
             </div>
             
             <div className="bg-blue-100 rounded-lg p-8">
-              <div className="text-6xl mb-4 text-center">🌳</div>
+              <div className="mb-4 flex justify-center">
+                <img src="/images/elephants/hero/banner.jpg" alt="Nature" className="h-16 w-16 object-cover rounded-full shadow" />
+              </div>
               <h3 className="text-xl font-semibold text-center mb-4">
                 {currentLang === 'th' ? 'พื้นที่อนุรักษ์' : 'Conservation Area'}
               </h3>
@@ -316,38 +324,6 @@ export default function AboutPage() {
                 <span className="text-gray-800">{item}</span>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-16 bg-green-600 text-white">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            {currentLang === 'th' 
-              ? 'พร้อมเข้าร่วมกับเราแล้วหรือยัง?' 
-              : 'Ready to Join Us?'}
-          </h2>
-          <p className="text-xl mb-8 text-green-100">
-            {currentLang === 'th'
-              ? 'จองทัวร์ช้างธรรมชาติและมาเป็นส่วนหนึ่งในการอนุรักษ์ช้าง'
-              : 'Book your ethical elephant tour and become part of elephant conservation'}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-white text-white hover:bg-white hover:text-green-600 px-8 py-4 text-lg"
-            >
-              {currentLang === 'th' ? 'ดูโปรแกรมทัวร์' : 'View Tour Packages'}
-            </Button>
-            <Button
-              variant="primary"
-              size="lg"
-              className="bg-yellow-500 text-green-800 hover:bg-yellow-400 px-8 py-4 text-lg font-semibold"
-            >
-              {currentLang === 'th' ? 'ติดต่อเรา' : 'Contact Us'}
-            </Button>
           </div>
         </div>
       </section>

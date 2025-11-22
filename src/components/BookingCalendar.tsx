@@ -20,6 +20,15 @@ export default function BookingCalendar({
 }: BookingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
+  // ฟังก์ชันดึงชื่อโปรแกรมตามภาษา
+  const packageNames: Record<string, { th: string; en: string }> = {
+    '1': { th: 'ช้างธรรมชาติ', en: 'Elephant Nature' },
+    '2': { th: 'เดินเล่น ป้อนอาหาร', en: 'Walk & Feed' },
+    '3': { th: 'มินิช้างธรรมชาติ', en: 'Mini Elephant Nature' }
+  }
+  const langKey = currentLang === 'th' ? 'th' : 'en';
+  const currentPackageName = packageId ? (packageNames[String(packageId)]?.[langKey] || packageNames[String(packageId)]?.en) : ''
+
   const content = {
     th: {
       selectDate: 'เลือกวันที่',
@@ -59,29 +68,29 @@ export default function BookingCalendar({
     }
   }
 
-  // Generate calendar days
+  // Generate calendar days for the current month view
   const getDaysInMonth = () => {
-    const year = currentMonth.getFullYear()
-    const month = currentMonth.getMonth()
-    const firstDay = new Date(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0)
-    const startDate = new Date(firstDay)
-    startDate.setDate(startDate.getDate() - firstDay.getDay())
-    
-    const days = []
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    const days: Date[] = [];
     for (let i = 0; i < 42; i++) {
-      const date = new Date(startDate)
-      date.setDate(startDate.getDate() + i)
-      days.push(date)
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      days.push(date);
     }
-    return days
+    return days;
   }
 
   const isDateAvailable = (date: Date) => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return date >= today && date.getMonth() === currentMonth.getMonth()
-  }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    // Allow all future dates, not just current month
+    return date >= today;
+  };
+  // Remove misplaced closing bracket
 
   const formatDate = (date: Date) => {
     return date.toISOString().split('T')[0]
@@ -93,43 +102,50 @@ export default function BookingCalendar({
   }
 
   const nextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
   }
 
   const prevMonth = () => {
-    setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
   }
 
   const days = getDaysInMonth()
-  const timeSlots = getTimeSlots()
+  // Filter time slots for today to only show future times (Asia/Bangkok)
+  let timeSlots = getTimeSlots();
+  // Show all time slots for every day, including today
 
   return (
     <div>
+      {currentPackageName && (
+        <div className="mb-2">
+          <span className="text-lg font-bold text-black">{currentPackageName}</span>
+        </div>
+      )}
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
         {currentContent.selectDate}
       </h2>
-      
       {/* Calendar */}
       <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
         {/* Calendar Header */}
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={prevMonth}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            className="p-2 rounded-full bg-green-100 text-green-700 font-bold shadow hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500"
+            aria-label="Previous Month"
           >
-            ←
+            &#8592;
           </button>
-          <h3 className="text-lg font-semibold">
+          <h3 className="text-2xl font-bold text-green-700 drop-shadow-sm px-4">
             {currentContent.months[currentMonth.getMonth()]} {currentMonth.getFullYear()}
           </h3>
           <button
             onClick={nextMonth}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            className="p-2 rounded-full bg-green-100 text-green-700 font-bold shadow hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500"
+            aria-label="Next Month"
           >
-            →
+            &#8594;
           </button>
         </div>
-
         {/* Days Header */}
         <div className="grid grid-cols-7 gap-1 mb-2">
           {currentContent.days.map((day) => (
@@ -138,14 +154,12 @@ export default function BookingCalendar({
             </div>
           ))}
         </div>
-
         {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-1">
           {days.map((date, index) => {
             const isAvailable = isDateAvailable(date)
             const isSelected = selectedDate === formatDate(date)
             const isTodayDate = isToday(date)
-            
             return (
               <button
                 key={index}
@@ -173,7 +187,6 @@ export default function BookingCalendar({
           })}
         </div>
       </div>
-
       {/* Time Slots */}
       {selectedDate && (
         <div className="bg-white rounded-lg shadow-lg p-6">
@@ -183,7 +196,6 @@ export default function BookingCalendar({
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {timeSlots.map((time) => {
               const isSelected = selectedTime === time
-              
               return (
                 <button
                   key={time}

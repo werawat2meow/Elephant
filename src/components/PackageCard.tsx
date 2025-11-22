@@ -100,20 +100,13 @@ export default function PackageCard({ package: pkg, currentLang }: PackageCardPr
           </div>
         </div>
 
-        {/* CTA Buttons */}
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 text-green-600 border-2 border-green-600 hover:bg-green-600 hover:text-white font-medium transition-all duration-200"
-          >
-            {currentLang === 'th' ? 'ดูรายละเอียด' : 'View Details'}
-          </Button>
+        {/* CTA Button */}
+        <div className="flex">
           <Button
             variant="primary"
             size="sm"
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium shadow-md hover:shadow-lg transition-all duration-200"
-            onClick={() => window.location.href = '/booking'}
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-medium shadow-md hover:shadow-lg transition-all duration-200"
+            onClick={() => window.location.href = `/booking?packageId=${pkg.id}`}
           >
             {currentLang === 'th' ? 'จองเลย' : 'Book Now'}
           </Button>
