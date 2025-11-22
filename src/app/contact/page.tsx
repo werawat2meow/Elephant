@@ -4,11 +4,13 @@ import { useLanguage } from '../../contexts/LanguageContext'
 import Button from '../../components/Button'
 
 export default function ContactPage() {
+    const [showLineQR, setShowLineQR] = useState(false)
   const { currentLang } = useLanguage()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
+    whatsapp: '',
     subject: '',
     message: ''
   })
@@ -222,19 +224,37 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false)
-      alert(currentLang === 'th' ? 'ส่งข้อความเรียบร้อยแล้ว!' : 'Message sent successfully!')
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: ''
+    try {
+      const res = await fetch('/api/booking-notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          whatsapp: formData.whatsapp,
+          subject: formData.subject,
+          message: formData.message,
+          from: 'contact'
+        })
       })
-    }, 2000)
+      if (res.ok) {
+        alert(currentLang === 'th' ? 'ส่งข้อความเรียบร้อยแล้ว!' : 'Message sent successfully!')
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          whatsapp: '',
+          subject: '',
+          message: ''
+        })
+      } else {
+        alert(currentLang === 'th' ? 'เกิดข้อผิดพลาดในการส่ง!' : 'Error sending message!')
+      }
+    } catch (err) {
+      alert(currentLang === 'th' ? 'เชื่อมต่อ API ไม่สำเร็จ!' : 'API connection error!')
+    }
+    setIsSubmitting(false)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -250,132 +270,64 @@ export default function ContactPage() {
       {/* Contact Content */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12">
-            
-            {/* Contact Information */}
-            <div>
-              {/* Social Media */}
-              <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  {currentContent.social}
-                </h3>
-                <div className="flex space-x-4">
-                  <a href="#" className="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition-colors">
-                    📘 Facebook
-                  </a>
-                  <a href="#" className="bg-pink-500 text-white p-3 rounded-lg hover:bg-pink-600 transition-colors">
-                    📷 Instagram
-                  </a>
-                  <a href="#" className="bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition-colors">
-                    💬 Line
-                  </a>
-                </div>
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">{currentContent.title}</h2>
+              <p className="mb-6 text-gray-700">{currentContent.subtitle}</p>
+              <div className="mb-4">
+                <div className="font-semibold text-gray-900 mb-1">{currentContent.address}</div>
+                <div className="text-gray-700">{currentContent.addressDetail}</div>
               </div>
-            </div>
-
-            {/* Contact Form */}
-            <div>
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  {currentContent.form.title}
-                </h2>
-                
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Name */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {currentContent.form.name} <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      required
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      placeholder={currentContent.form.placeholders.name}
-                    />
-                  </div>
-
-                  {/* Email */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {currentContent.form.email} <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      required
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      placeholder={currentContent.form.placeholders.email}
-                    />
-                  </div>
-
-                  {/* Phone */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {currentContent.form.phone}
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      placeholder={currentContent.form.placeholders.phone}
-                    />
-                  </div>
-
-                  {/* Subject */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {currentContent.form.subject} <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="subject"
-                      required
-                      value={formData.subject}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    >
-                      <option value="">{currentContent.form.placeholders.subject}</option>
-                      {currentContent.form.subjects.map((subject, index) => (
-                        <option key={index} value={subject}>
-                          {subject}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Message */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {currentContent.form.message} <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      name="message"
-                      required
-                      rows={5}
-                      value={formData.message}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      placeholder={currentContent.form.placeholders.message}
-                    />
-                  </div>
-
-                  {/* Submit Button */}
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="lg"
-                    disabled={isSubmitting}
-                    className="w-full bg-green-600 hover:bg-green-700"
+              <div className="mb-4">
+                <div className="font-semibold text-gray-900 mb-1">{currentContent.phone}</div>
+                <div className="text-gray-700">+66 81 234 5678</div>
+              </div>
+              <div className="mb-4">
+                <div className="font-semibold text-gray-900 mb-1">{currentContent.email}</div>
+                <div className="text-gray-700">info@jasminetour.com</div>
+              </div>
+              <div className="mb-4">
+                <div className="font-semibold text-gray-900 mb-1">{currentContent.hours}</div>
+                <div className="text-gray-700">{currentContent.hoursDetail}</div>
+              </div>
+              <div className="mb-4">
+                <div className="font-semibold text-gray-900 mb-1">{currentContent.social}</div>
+                <div className="flex space-x-4 mt-2">
+                  <a href="#" className="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition-colors">📘 Facebook</a>
+                  <a href="#" className="bg-pink-500 text-white p-3 rounded-lg hover:bg-pink-600 transition-colors">📷 Instagram</a>
+                  <button
+                    type="button"
+                    className="bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition-colors"
+                    onClick={() => setShowLineQR(true)}
                   >
-                    {isSubmitting ? currentContent.form.sending : currentContent.form.send}
-                  </Button>
-                </form>
+                    💬 Line
+                  </button>
+                </div>
+                {/* Line QR Modal */}
+                {showLineQR && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-white rounded-lg shadow-lg p-6 max-w-xs w-full relative">
+                      <button
+                        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl"
+                        onClick={() => setShowLineQR(false)}
+                        aria-label="Close"
+                      >
+                        ×
+                      </button>
+                      <h3 className="text-lg font-semibold text-center mb-4">Add Line Official</h3>
+                      <img
+                        src="/images/elephants/gallery/line.jpg"
+                        alt="Line QR Code"
+                        className="w-full h-auto rounded"
+                      />
+                      <p className="mt-4 text-center text-gray-700">Scan QR Code to chat with us on LINE</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="mb-4">
+                <div className="font-semibold text-gray-900 mb-1">{currentContent.directions}</div>
+                <div className="text-gray-700">{currentContent.directionsText}</div>
               </div>
             </div>
           </div>
