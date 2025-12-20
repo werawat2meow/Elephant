@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import type { Language } from "../contexts/LanguageContext";
@@ -57,7 +58,14 @@ export default function Navigation({
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <div className="text-2xl">🐘</div>
+            <Image
+              src="/images/elephants/logo/logo.jpg"
+              alt="Jasmine Tour logo"
+              width={58}
+              height={58}
+              className="h-16 w-16 rounded"
+              priority
+            />
             <span className="font-bold text-xl text-green-700">
               {currentLang === "th" ? "Jasmine Tour" : "Jasmine Tour"}
             </span>

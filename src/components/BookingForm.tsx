@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface BookingFormProps {
   bookingData: any;
@@ -17,6 +17,14 @@ export default function BookingForm({
     "1": { th: "ช้างธรรมชาติ", en: "Elephant Nature" },
     "2": { th: "เดินเล่น ป้อนอาหาร", en: "Walk & Feed" },
     "3": { th: "มินิช้างธรรมชาติ", en: "Mini Elephant Nature" },
+    "4": {
+      th: "คลาสทำอาหารไทย & ป้อนกล้วย",
+      en: "Traditional Thai Cooking Class & Feed Me Bananas",
+    },
+    "5": {
+      th: "คลาสทำอาหารไทยพิเศษ & สำรวจช้าง",
+      en: "Exclusive Thai Cooking Class & Exploring Elephants",
+    },
   };
   const langKey = currentLang === "th" ? "th" : "en";
   const currentPackageName = bookingData.packageId
@@ -31,6 +39,7 @@ export default function BookingForm({
     email: "",
     phone: "",
     nationality: "",
+    transferOption: "free" as "free" | "no_transfer",
     specialRequests: "",
     hotel: "",
     roomNumber: "",
@@ -45,6 +54,9 @@ export default function BookingForm({
       children: "เด็ก (4-11 ปี)",
       infants: "ทารก (0-3 ปี ฟรี)",
       contactDetails: "ข้อมูลติดต่อ",
+      transfer: "ต้องการรถรับส่งหรือไม่",
+      transferFree: "รับส่งฟรี",
+      transferNo: "ไม่รับส่ง",
       name: "ชื่อ-นามสกุล",
       email: "อีเมล",
       phone: "เบอร์โทร",
@@ -65,6 +77,9 @@ export default function BookingForm({
       children: "Children (4-11 years)",
       infants: "Infants (0-3 years FREE)",
       contactDetails: "Contact Details",
+      transfer: "Do you want free transfer?",
+      transferFree: "Free transfer",
+      transferNo: "No transfer",
       name: "Full Name",
       email: "Email Address",
       phone: "Phone Number",
@@ -86,15 +101,38 @@ export default function BookingForm({
   // Calculate total price
   const calculateTotal = () => {
     const packages = [
-      { id: 1, price: { adult: 2700, child: 1500 } },
-      { id: 2, price: { adult: 1600, child: 1000 } },
-      { id: 3, price: { adult: 1400, child: 800 } },
+      {
+        id: 1,
+        price: { adult: 2700, child: 1500 },
+        times: ["9:00 AM", "2:00 PM"],
+      },
+      {
+        id: 2,
+        price: { adult: 1600, child: 1000 },
+        times: ["9:00 AM", "11:00 AM", "2:00 PM"],
+      },
+      {
+        id: 3,
+        price: { adult: 1400, child: 800 },
+        times: ["9:00 AM", "11:00 AM", "2:00 PM"],
+      },
+      {
+        id: 4,
+        price: { adult: 2750, child: 1550 },
+        times: ["9:00 AM", "2:00 PM"],
+      },
+      { id: 5, price: { adult: 3350, child: 1850 }, times: ["9:00 AM"] }, // Cooking Class
     ];
 
     const selectedPackage = packages.find(
       (pkg) => pkg.id === bookingData.packageId
     );
     if (!selectedPackage) return 0;
+
+    // ตรวจสอบเวลา
+    if (!selectedPackage.times || selectedPackage.times.length === 0) {
+      console.warn("No available times for this package.");
+    }
 
     const adultsTotal = adults * selectedPackage.price.adult;
     const childrenTotal = children * selectedPackage.price.child;
@@ -103,6 +141,19 @@ export default function BookingForm({
   };
 
   const totalPrice = calculateTotal();
+
+  const pricingPackages = [
+    { id: 1, adult: 2700, child: 1500 },
+    { id: 2, adult: 1600, child: 1000 },
+    { id: 3, adult: 1400, child: 800 },
+    { id: 4, adult: 2750, child: 1550 },
+    { id: 5, adult: 3350, child: 1850 },
+  ];
+  const selectedPricing = pricingPackages.find(
+    (p) => p.id === bookingData.packageId
+  );
+  const adultUnitPrice = selectedPricing?.adult ?? 0;
+  const childUnitPrice = selectedPricing?.child ?? 0;
 
   // Update booking data when form changes
   useEffect(() => {
@@ -115,6 +166,10 @@ export default function BookingForm({
       contactInfo,
     });
   }, [adults, children, infants, contactInfo, totalPrice]);
+
+  useEffect(() => {
+    console.log("Booking Data:", bookingData);
+  }, [bookingData]);
 
   const Counter = ({ value, onChange, min = 0, max = 10 }: any) => (
     <div className="flex items-center space-x-3">
@@ -167,12 +222,7 @@ export default function BookingForm({
                     {currentContent.adults}
                   </div>
                   <div className="text-sm text-gray-500">
-                    ฿
-                    {bookingData.packageId === 1
-                      ? "2,700"
-                      : bookingData.packageId === 2
-                      ? "1,600"
-                      : "1,400"}
+                    ฿{adultUnitPrice.toLocaleString()}
                   </div>
                 </div>
                 <Counter value={adults} onChange={setAdults} min={1} />
@@ -182,12 +232,7 @@ export default function BookingForm({
                 <div>
                   <div className="font-medium">{currentContent.children}</div>
                   <div className="text-sm text-black font-bold">
-                    ฿
-                    {bookingData.packageId === 1
-                      ? "1,500"
-                      : bookingData.packageId === 2
-                      ? "1,000"
-                      : "800"}
+                    ฿{childUnitPrice.toLocaleString()}
                   </div>
                 </div>
                 <Counter value={children} onChange={setChildren} />
@@ -212,6 +257,43 @@ export default function BookingForm({
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {currentContent.transfer}
+                </label>
+                <div className="flex items-center gap-6">
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="radio"
+                      name="transferOption"
+                      value="free"
+                      checked={contactInfo.transferOption === "free"}
+                      onChange={() =>
+                        setContactInfo({
+                          ...contactInfo,
+                          transferOption: "free",
+                        })
+                      }
+                    />
+                    {currentContent.transferFree}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="radio"
+                      name="transferOption"
+                      value="no_transfer"
+                      checked={contactInfo.transferOption === "no_transfer"}
+                      onChange={() =>
+                        setContactInfo({
+                          ...contactInfo,
+                          transferOption: "no_transfer",
+                        })
+                      }
+                    />
+                    {currentContent.transferNo}
+                  </label>
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {currentContent.hotel}
@@ -357,17 +439,7 @@ export default function BookingForm({
                   <span>
                     {currentContent.adults} × {adults}
                   </span>
-                  <span>
-                    ฿
-                    {(
-                      adults *
-                      (bookingData.packageId === 1
-                        ? 2700
-                        : bookingData.packageId === 2
-                        ? 1600
-                        : 1400)
-                    ).toLocaleString()}
-                  </span>
+                  <span>฿{(adults * adultUnitPrice).toLocaleString()}</span>
                 </div>
               )}
 
@@ -376,17 +448,7 @@ export default function BookingForm({
                   <span>
                     {currentContent.children} × {children}
                   </span>
-                  <span>
-                    ฿
-                    {(
-                      children *
-                      (bookingData.packageId === 1
-                        ? 1500
-                        : bookingData.packageId === 2
-                        ? 1000
-                        : 800)
-                    ).toLocaleString()}
-                  </span>
+                  <span>฿{(children * childUnitPrice).toLocaleString()}</span>
                 </div>
               )}
 

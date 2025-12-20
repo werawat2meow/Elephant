@@ -1,1 +1,37 @@
-[]
+[
+  {
+    "id": 1,
+    "name": { "th": "ช้างธรรมชาติ", "en": "Elephant Nature" },
+    "price": { "adult": 2700, "child": 1500 },
+    "times": ["9:00 AM", "2:00 PM"],
+    "activities": ["Feed elephants", "Photo with elephants"]
+  },
+  {
+    "id": 2,
+    "name": { "th": "เดินเล่น ป้อนอาหาร", "en": "Walk & Feed" },
+    "price": { "adult": 1600, "child": 1000 },
+    "times": ["9:00 AM", "11:00 AM", "2:00 PM"],
+    "activities": ["Feed elephants", "Prepare elephant meal"]
+  },
+  {
+    "id": 3,
+    "name": { "th": "มินิช้างธรรมชาติ", "en": "Mini Elephant Nature" },
+    "price": { "adult": 1400, "child": 800 },
+    "times": ["9:00 AM", "11:00 AM", "2:00 PM"],
+    "activities": ["Feed elephants", "Learn behaviors"]
+  },
+  {
+    "id": 4,
+    "name": { "th": "คลาสทำอาหารไทย & ป้อนกล้วย", "en": "Traditional Thai Cooking Class & Feed Me Bananas" },
+    "price": { "adult": 2750, "child": 1550 },
+    "times": ["9:00 AM", "2:00 PM"],
+    "activities": ["Thai cooking demo", "Feed bananas to elephants"]
+  },
+  {
+    "id": 5,
+    "name": { "th": "คลาสทำอาหารไทยพิเศษ & สำรวจช้าง", "en": "Exclusive Thai Cooking Class & Exploring Elephants" },
+    "price": { "adult": 3350, "child": 1850 },
+    "times": ["9:00 AM"],
+    "activities": ["Exclusive cooking", "Elephant exploration"]
+  }
+]

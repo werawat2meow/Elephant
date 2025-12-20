@@ -1,72 +1,111 @@
-'use client'
-import { useState } from 'react'
+"use client";
+import { useState } from "react";
 
 interface BookingCalendarProps {
-  packageId: number | null
-  selectedDate: string | null
-  selectedTime: string | null
-  onDateSelect: (date: string) => void
-  onTimeSelect: (time: string) => void
-  currentLang: string
+  packageId: number | null;
+  selectedDate: string | null;
+  selectedTime: string | null;
+  onDateSelect: (date: string) => void;
+  onTimeSelect: (time: string) => void;
+  currentLang: string;
 }
 
-export default function BookingCalendar({ 
-  packageId, 
-  selectedDate, 
-  selectedTime, 
-  onDateSelect, 
-  onTimeSelect, 
-  currentLang 
+export default function BookingCalendar({
+  packageId,
+  selectedDate,
+  selectedTime,
+  onDateSelect,
+  onTimeSelect,
+  currentLang,
 }: BookingCalendarProps) {
-  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // ฟังก์ชันดึงชื่อโปรแกรมตามภาษา
   const packageNames: Record<string, { th: string; en: string }> = {
-    '1': { th: 'ช้างธรรมชาติ', en: 'Elephant Nature' },
-    '2': { th: 'เดินเล่น ป้อนอาหาร', en: 'Walk & Feed' },
-    '3': { th: 'มินิช้างธรรมชาติ', en: 'Mini Elephant Nature' }
-  }
-  const langKey = currentLang === 'th' ? 'th' : 'en';
-  const currentPackageName = packageId ? (packageNames[String(packageId)]?.[langKey] || packageNames[String(packageId)]?.en) : ''
+    "1": { th: "ช้างธรรมชาติ", en: "Elephant Nature" },
+    "2": { th: "เดินเล่น ป้อนอาหาร", en: "Walk & Feed" },
+    "3": { th: "มินิช้างธรรมชาติ", en: "Mini Elephant Nature" },
+    "4": {
+      th: "คลาสทำอาหารไทย & ป้อนกล้วย",
+      en: "Traditional Thai Cooking Class & Feed Me Bananas",
+    },
+    "5": {
+      th: "คลาสทำอาหารไทยพิเศษ & สำรวจช้าง",
+      en: "Exclusive Thai Cooking Class & Exploring Elephants",
+    },
+  };
+  const langKey = currentLang === "th" ? "th" : "en";
+  const currentPackageName = packageId
+    ? packageNames[String(packageId)]?.[langKey] ||
+      packageNames[String(packageId)]?.en
+    : "";
 
   const content = {
     th: {
-      selectDate: 'เลือกวันที่',
-      selectTime: 'เลือกเวลา',
-      available: 'ว่าง',
-      unavailable: 'เต็มแล้ว',
-      today: 'วันนี้',
+      selectDate: "เลือกวันที่",
+      selectTime: "เลือกเวลา",
+      available: "ว่าง",
+      unavailable: "เต็มแล้ว",
+      today: "วันนี้",
       months: [
-        'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-        'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+        "มกราคม",
+        "กุมภาพันธ์",
+        "มีนาคม",
+        "เมษายน",
+        "พฤษภาคม",
+        "มิถุนายน",
+        "กรกฎาคม",
+        "สิงหาคม",
+        "กันยายน",
+        "ตุลาคม",
+        "พฤศจิกายน",
+        "ธันวาคม",
       ],
-      days: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']
+      days: ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"],
     },
     en: {
-      selectDate: 'Select Date',
-      selectTime: 'Select Time',
-      available: 'Available',
-      unavailable: 'Full',
-      today: 'Today',
+      selectDate: "Select Date",
+      selectTime: "Select Time",
+      available: "Available",
+      unavailable: "Full",
+      today: "Today",
       months: [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
       ],
-      days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-    }
-  }
+      days: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    },
+  };
 
-  const currentContent = content[currentLang as keyof typeof content] || content.en
+  const currentContent =
+    content[currentLang as keyof typeof content] || content.en;
 
   // Available time slots based on package
   const getTimeSlots = () => {
     switch (packageId) {
-      case 1: return ['9:00 AM', '2:00 PM']
+      case 1:
+        return ["9:00 AM", "2:00 PM"];
       case 2:
-      case 3: return ['9:00 AM', '11:00 AM', '2:00 PM']
-      default: return []
+      case 3:
+        return ["9:00 AM", "11:00 AM", "2:00 PM"];
+      case 4:
+        return ["9:00 AM", "2:00 PM"];
+      case 5:
+        return ["9:00 AM"];
+      default:
+        return [];
     }
-  }
+  };
 
   // Generate calendar days for the current month view
   const getDaysInMonth = () => {
@@ -82,34 +121,41 @@ export default function BookingCalendar({
       days.push(date);
     }
     return days;
-  }
+  };
 
   const isDateAvailable = (date: Date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    // Allow all future dates, not just current month
-    return date >= today;
+    // Require booking at least 1 day in advance (earliest selectable date is tomorrow)
+    const minDate = new Date(today);
+    minDate.setDate(minDate.getDate() + 1);
+    // Allow all dates from minDate onward, not just current month
+    return date >= minDate;
   };
   // Remove misplaced closing bracket
 
   const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0]
-  }
+    return date.toISOString().split("T")[0];
+  };
 
   const isToday = (date: Date) => {
-    const today = new Date()
-    return date.toDateString() === today.toDateString()
-  }
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
 
   const nextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
-  }
+    setCurrentMonth(
+      new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
+    );
+  };
 
   const prevMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
-  }
+    setCurrentMonth(
+      new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
+    );
+  };
 
-  const days = getDaysInMonth()
+  const days = getDaysInMonth();
   // Filter time slots for today to only show future times (Asia/Bangkok)
   let timeSlots = getTimeSlots();
   // Show all time slots for every day, including today
@@ -118,7 +164,9 @@ export default function BookingCalendar({
     <div>
       {currentPackageName && (
         <div className="mb-2">
-          <span className="text-lg font-bold text-black">{currentPackageName}</span>
+          <span className="text-lg font-bold text-black">
+            {currentPackageName}
+          </span>
         </div>
       )}
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
@@ -136,7 +184,8 @@ export default function BookingCalendar({
             &#8592;
           </button>
           <h3 className="text-2xl font-bold text-green-700 drop-shadow-sm px-4">
-            {currentContent.months[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+            {currentContent.months[currentMonth.getMonth()]}{" "}
+            {currentMonth.getFullYear()}
           </h3>
           <button
             onClick={nextMonth}
@@ -149,7 +198,10 @@ export default function BookingCalendar({
         {/* Days Header */}
         <div className="grid grid-cols-7 gap-1 mb-2">
           {currentContent.days.map((day) => (
-            <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
+            <div
+              key={day}
+              className="text-center text-sm font-medium text-gray-500 py-2"
+            >
               {day}
             </div>
           ))}
@@ -157,9 +209,9 @@ export default function BookingCalendar({
         {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-1">
           {days.map((date, index) => {
-            const isAvailable = isDateAvailable(date)
-            const isSelected = selectedDate === formatDate(date)
-            const isTodayDate = isToday(date)
+            const isAvailable = isDateAvailable(date);
+            const isSelected = selectedDate === formatDate(date);
+            const isTodayDate = isToday(date);
             return (
               <button
                 key={index}
@@ -169,21 +221,21 @@ export default function BookingCalendar({
                   p-2 text-sm rounded-lg transition-colors
                   ${
                     isSelected
-                      ? 'bg-green-600 text-white'
+                      ? "bg-green-600 text-white"
                       : isAvailable
-                      ? 'hover:bg-green-100 text-gray-900'
-                      : 'text-gray-300 cursor-not-allowed'
+                      ? "hover:bg-green-100 text-gray-900"
+                      : "text-gray-300 cursor-not-allowed"
                   }
                   ${
                     isTodayDate && !isSelected
-                      ? 'bg-green-50 border border-green-200'
-                      : ''
+                      ? "bg-green-50 border border-green-200"
+                      : ""
                   }
                 `}
               >
                 {date.getDate()}
               </button>
-            )
+            );
           })}
         </div>
       </div>
@@ -195,7 +247,7 @@ export default function BookingCalendar({
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {timeSlots.map((time) => {
-              const isSelected = selectedTime === time
+              const isSelected = selectedTime === time;
               return (
                 <button
                   key={time}
@@ -204,8 +256,8 @@ export default function BookingCalendar({
                     p-3 rounded-lg border-2 transition-colors
                     ${
                       isSelected
-                        ? 'border-green-600 bg-green-600 text-white'
-                        : 'border-gray-200 hover:border-green-300 text-gray-700'
+                        ? "border-green-600 bg-green-600 text-white"
+                        : "border-gray-200 hover:border-green-300 text-gray-700"
                     }
                   `}
                 >
@@ -214,11 +266,11 @@ export default function BookingCalendar({
                     {currentContent.available}
                   </div>
                 </button>
-              )
+              );
             })}
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
