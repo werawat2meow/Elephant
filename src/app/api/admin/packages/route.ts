@@ -5,13 +5,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  // ตัวอย่าง: รับข้อมูลแล้วส่งต่อไป LINE หรือแค่ log
-  const body = await request.json();
-  console.log("Booking received:", body);
-  // TODO: ส่งข้อมูลไป LINE Notify ที่นี่
   return NextResponse.json(
-    { ok: true, message: "Booking sent to LINE" },
-    { status: 201 }
+    { ok: false, message: "Catalogue editing is not connected. Edit data/packages.json and redeploy." },
+    { status: 503 }
   );
 }
 

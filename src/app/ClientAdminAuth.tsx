@@ -16,6 +16,7 @@ export default function ClientAdminAuth({
     getSession().then((session) => {
       if (!mounted) return;
       if (!session) {
+        try { sessionStorage.setItem('jasmine-admin-return', window.location.pathname + window.location.hash); } catch {}
         router.replace("/admin/login");
       } else {
         setChecked(true);

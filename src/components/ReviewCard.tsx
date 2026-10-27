@@ -1,4 +1,4 @@
-interface Review {
+﻿interface Review {
   id: number
   name: string
   country: string

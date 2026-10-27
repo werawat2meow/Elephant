@@ -10,7 +10,9 @@
     "prisma:seed": "node prisma/seed.js",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:booking": "node scripts/check-booking.cjs",
+    "admin:setup": "node scripts/setup-admin.cjs"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.5",

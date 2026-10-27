@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 
 interface BookingFormProps {
@@ -31,9 +31,9 @@ export default function BookingForm({
     ? packageNames[String(bookingData.packageId)]?.[langKey] ||
       packageNames[String(bookingData.packageId)]?.en
     : "";
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
-  const [infants, setInfants] = useState(0);
+  const [adults, setAdults] = useState(bookingData.adults ?? 1);
+  const [children, setChildren] = useState(bookingData.children ?? 0);
+  const [infants, setInfants] = useState(bookingData.infants ?? 0);
   const [contactInfo, setContactInfo] = useState({
     name: "",
     email: "",
@@ -44,6 +44,7 @@ export default function BookingForm({
     hotel: "",
     roomNumber: "",
     whatsapp: "",
+    ...bookingData.contactInfo,
   });
 
   const content = {
@@ -167,9 +168,7 @@ export default function BookingForm({
     });
   }, [adults, children, infants, contactInfo, totalPrice]);
 
-  useEffect(() => {
-    console.log("Booking Data:", bookingData);
-  }, [bookingData]);
+
 
   const Counter = ({ value, onChange, min = 0, max = 10 }: any) => (
     <div className="flex items-center space-x-3">
@@ -388,11 +387,10 @@ export default function BookingForm({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {currentContent.phone} <span className="text-red-500">*</span>
+                  {currentContent.phone} {currentLang === "th" ? "(ไม่บังคับ)" : "(Optional)"}
                 </label>
                 <input
                   type="tel"
-                  required
                   value={contactInfo.phone}
                   onChange={(e) =>
                     setContactInfo({ ...contactInfo, phone: e.target.value })

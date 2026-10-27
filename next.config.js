@@ -1,13 +1,10 @@
 /** @type {import('next').NextConfig} */
 module.exports = {
+  images: { formats: ['image/avif', 'image/webp'] },
   experimental: {
     optimizeCss: false,            // ปิด lightningcss (กัน error binary)
-    disableOptimizedLoading: true, // กัน error preloading บางเคส
   },
   eslint: {
     ignoreDuringBuilds: true,      // ข้าม ESLint ตอน build บน Vercel
-  },
-  typescript: {
-    ignoreBuildErrors: true,       // ข้าม TS error ตอน build (กัน deploy fail)
   },
 };

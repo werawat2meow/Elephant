@@ -21,7 +21,13 @@ export default function AdminLogin() {
     });
     setLoading(false);
     if (res?.ok) {
-      router.push("/admin");
+      let destination = '/admin';
+      try {
+        const saved = sessionStorage.getItem('jasmine-admin-return') || '';
+        if (saved.startsWith('/admin/bookings#ticket=') && saved.length < 5000) destination = saved;
+        sessionStorage.removeItem('jasmine-admin-return');
+      } catch {}
+      router.push(destination);
     } else {
       setError("Invalid credentials");
     }
